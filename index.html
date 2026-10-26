@@ -66,7 +66,7 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
   <div class="strip" id="strip"></div>
   <div style="display:flex;align-items:center;border-bottom:1px solid var(--line)"><div class="stat" id="stat" style="flex:1;border-bottom:0"></div><button class="badge" id="bUn" style="display:none;border:0;cursor:pointer;margin-right:6px" aria-label="Jump to unread chat"></button><button class="badge" id="bFr" style="border:0;cursor:pointer;margin-right:10px;background:var(--them);color:var(--ink)" aria-label="Friend options">⋯</button></div>
   <div id="msgs"></div>
-  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.7.0</span></div>
+  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.7.1</span></div>
   <div class="bar">
     <input type="file" id="pic" accept="image/*,video/*" hidden>
     <input type="file" id="bgIn" accept="image/*" hidden>
@@ -122,6 +122,10 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
   </div>
   <button class="btn g" id="lkUse">Use an account from another device</button>
   <div style="font-size:12px;color:var(--mute)">Linked devices share your friends, chats and streaks while they are online together. Anyone who holds a linked device can read your chats, so keep your devices locked.</div>
+  <hr style="width:100%;border:0;border-top:1px solid var(--line)">
+  <div style="font-size:14px;font-weight:600">Share Skein</div>
+  <div class="row" style="max-width:none"><button class="btn" id="shApp" style="flex:1">Share app link</button><button class="btn g" id="shInv" style="flex:1">Invite with my ID</button></div>
+  <div style="font-size:12px;color:var(--mute)">“Invite” sends the link plus yours, so they can add you in one tap. On iPhone they should open it in Safari, tap Share, “Add to Home Screen”, then add you from inside the app with your ID.</div>
   <hr style="width:100%;border:0;border-top:1px solid var(--line)">
   <div style="font-size:14px;font-weight:600">Offline mailbox</div>
   <div id="mbSt" style="font-size:13px"></div>
@@ -208,7 +212,7 @@ const enc=s=>new TextEncoder().encode(s);
 async function signFor(dev){if(!myPriv)return null;return new Uint8Array(await SUB.sign(SIG,myPriv,enc(myId+'>'+dev)))}
 async function verifyFrom(jwk,sig,dev){try{const k=await SUB.importKey('jwk',{kty:jwk.kty,crv:jwk.crv,x:jwk.x,y:jwk.y},ALG,false,['verify']);return await SUB.verify(SIG,k,new Uint8Array(sig),enc(dev+'>'+myId))}catch(e){return false}}
 /* ---------- theme: auto / light / dark ---------- */
-const APP_VERSION='1.7.0';
+const APP_VERSION='1.7.1';
 function getTheme(){try{const t=localStorage.getItem('sk_theme');return t=='light'||t=='dark'?t:'auto'}catch(e){return'auto'}}
 function applyTheme(t){
   if(t=='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);
@@ -661,6 +665,13 @@ $('bSet').onclick=()=>{$('st').classList.add('show');renderSettings();renderUp()
 $('stX').onclick=()=>$('st').classList.remove('show');
 $('thA').onclick=()=>setTheme('auto');$('thL').onclick=()=>setTheme('light');$('thD').onclick=()=>setTheme('dark');
 $('stRen').onclick=async()=>{const n=await askText('Your display name',myName);if(!n)return;myName=n.slice(0,20);localStorage.setItem('sk_name',myName);profChanged();friendsRehi();renderSettings()};
+const SITE='https://kingboppa.github.io/Skein-Web-1/';
+async function shareLink(url,text){
+  try{if(navigator.share){await navigator.share({title:'Skein',text,url});return}}catch(e){if(e&&e.name=='AbortError')return}
+  if(await copyText(url))toast('Link copied. Paste it into a message.');else await askText('Copy this link',url);
+}
+$('shApp').onclick=()=>shareLink(SITE,'Skein is a chat app with no ads.');
+$('shInv').onclick=()=>shareLink(SITE+'#add='+myAcct,'Join me on Skein, a chat app with no ads. Open this to add me:');
 $('mbSet').onclick=async()=>{
   const v=await askText('Paste your mailbox link (it starts with https://script.google.com/)',mbUrl);if(v===null)return;
   const u=v.trim();if(!MB_RE.test(u))return toast('That doesn’t look like a mailbox link');
