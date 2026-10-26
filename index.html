@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <script>try{var t=localStorage.getItem('sk_theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<meta name="skein-min-shell" content="1">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -57,7 +58,7 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
 #camT{position:relative;z-index:2;color:#fff;font-size:14px;text-shadow:0 1px 4px #000;margin-bottom:12px}
 #shut{position:relative;z-index:2;width:78px;height:78px;border-radius:50%;border:5px solid #fff;background:rgba(255,255,255,.25);margin-bottom:calc(30px + env(safe-area-inset-bottom,0px));touch-action:none;user-select:none;-webkit-user-select:none;transition:transform .15s,background .15s}
 #shut.recording{background:#e5383b;transform:scale(1.25)}
-.zrow{position:relative;z-index:2;display:flex;gap:10px;align-items:center;color:#fff;width:80%;max-width:320px;margin-bottom:10px;text-shadow:0 1px 4px #000}.zrow input{flex:1}.cbtn.on{background:var(--accent)!important;color:var(--on)}.btn.on{background:#e5383b;color:#fff}.sv{margin-top:6px;border:0;border-radius:99px;padding:6px 12px;background:var(--surface);color:var(--ink);cursor:pointer;font-size:13px}.btn.sel{background:var(--accent);color:var(--on)}.btn:disabled{opacity:.5}.hasbg .empty{background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:12px;opacity:.95}.fr .dot{top:38px;left:50%;margin:0 0 0 14px}.fr .dot.u{top:-4px;margin:0 0 0 8px;width:auto;min-width:18px;height:18px;padding:0 4px;border-radius:99px;background:var(--accent);color:var(--on);font:700 11px/14px system-ui,sans-serif;text-align:center}</style>
+.zrow{position:relative;z-index:2;display:flex;gap:10px;align-items:center;color:#fff;width:80%;max-width:320px;margin-bottom:10px;text-shadow:0 1px 4px #000}.zrow input{flex:1}.cbtn.on{background:var(--accent)!important;color:var(--on)}.btn.on{background:#e5383b;color:#fff}.sv{margin-top:6px;border:0;border-radius:99px;padding:6px 12px;background:var(--surface);color:var(--ink);cursor:pointer;font-size:13px}.btn.sel{background:var(--accent);color:var(--on)}.btn:disabled{opacity:.5}.hasbg .empty{background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:12px;opacity:.95}.fr .dot{top:38px;left:50%;margin:0 0 0 14px}.fr .dot.u{top:-4px;margin:0 0 0 8px;width:auto;min-width:18px;height:18px;padding:0 4px;border-radius:99px;background:var(--accent);color:var(--on);font:700 11px/14px system-ui,sans-serif;text-align:center}.tb.upd{position:relative}.tb.upd::after{content:"";position:absolute;top:5px;right:5px;width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid var(--accent);box-sizing:content-box}</style>
 </head>
 <body>
 <div class="app">
@@ -65,7 +66,7 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
   <div class="strip" id="strip"></div>
   <div style="display:flex;align-items:center;border-bottom:1px solid var(--line)"><div class="stat" id="stat" style="flex:1;border-bottom:0"></div><button class="badge" id="bUn" style="display:none;border:0;cursor:pointer;margin-right:6px" aria-label="Jump to unread chat"></button><button class="badge" id="bFr" style="border:0;cursor:pointer;margin-right:10px;background:var(--them);color:var(--ink)" aria-label="Friend options">⋯</button></div>
   <div id="msgs"></div>
-  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.5.0</span></div>
+  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.6.0</span></div>
   <div class="bar">
     <input type="file" id="pic" accept="image/*,video/*" hidden>
     <input type="file" id="bgIn" accept="image/*" hidden>
@@ -126,6 +127,13 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
   <div class="row" style="max-width:none"><button class="btn g" id="stBg" style="flex:1">🖼 Choose image</button><button class="btn g" id="stBgX">Remove</button></div>
   <div style="font-size:12px;color:var(--mute)">Saved on this device only. Pick one per friend from the ⋯ button in a chat.</div>
   <hr style="width:100%;border:0;border-top:1px solid var(--line)">
+  <div id="upBox" style="display:none;flex-direction:column;gap:8px">
+    <div style="font-size:14px;font-weight:600">App updates</div>
+    <div id="upSt" style="font-size:14px"></div>
+    <div class="row" style="max-width:none"><button class="btn" id="upGo" style="flex:1">Check for updates</button><button class="btn g" id="upReset" style="display:none">Use built-in version</button></div>
+    <div style="font-size:12px;color:var(--mute)">Updates come from your Skein website on GitHub and keep all your chats. Big changes to the app itself still need a new installer.</div>
+    <hr style="width:100%;border:0;border-top:1px solid var(--line)">
+  </div>
   <div style="font-size:12px;color:var(--mute)" id="stVer"></div>
   <button class="btn g" id="stX">Close</button>
 </div></div>
@@ -195,7 +203,7 @@ const enc=s=>new TextEncoder().encode(s);
 async function signFor(dev){if(!myPriv)return null;return new Uint8Array(await SUB.sign(SIG,myPriv,enc(myId+'>'+dev)))}
 async function verifyFrom(jwk,sig,dev){try{const k=await SUB.importKey('jwk',{kty:jwk.kty,crv:jwk.crv,x:jwk.x,y:jwk.y},ALG,false,['verify']);return await SUB.verify(SIG,k,new Uint8Array(sig),enc(dev+'>'+myId))}catch(e){return false}}
 /* ---------- theme: auto / light / dark ---------- */
-const APP_VERSION='1.5.0';
+const APP_VERSION='1.6.0';
 function getTheme(){try{const t=localStorage.getItem('sk_theme');return t=='light'||t=='dark'?t:'auto'}catch(e){return'auto'}}
 function applyTheme(t){
   if(t=='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);
@@ -460,7 +468,46 @@ function renderSettings(){
   if(pendingLink&&Date.now()>pendingLink.exp)pendingLink=null;
   $('lkBox').style.display=pendingLink?'flex':'none';
 }
-$('bSet').onclick=()=>{$('st').classList.add('show');renderSettings()};
+/* ---------- desktop app updater (only exists inside the PC app) ---------- */
+const SD=window.skeinDesktop||null;
+let upInfo=null,up={stage:'idle',msg:''};
+function renderUp(){
+  if(!SD)return;
+  $('upBox').style.display='flex';
+  const v='Version '+APP_VERSION+(upInfo&&upInfo.updated?' (downloaded update)':'')+'. ';
+  const txt={idle:up.msg||'Not checked yet.',checking:'Checking…',uptodate:'You’re on the latest version.',available:'Version '+up.latest+' is available.',downloading:'Downloading…',ready:'Update downloaded. Restart to use version '+up.latest+'.',failed:up.msg}[up.stage];
+  $('upSt').textContent=v+(txt||'');
+  const b=$('upGo');b.disabled=up.stage=='checking'||up.stage=='downloading';
+  b.textContent={available:'Download v'+up.latest,ready:'Restart now',checking:'Checking…',downloading:'Downloading…'}[up.stage]||'Check for updates';
+  $('upReset').style.display=upInfo&&upInfo.updated?'':'none';
+  $('bSet').classList.toggle('upd',up.stage=='available'||up.stage=='ready');
+}
+async function upCheck(){
+  if(!SD||up.stage=='checking'||up.stage=='downloading')return;
+  const keep=up;up={stage:'checking'};renderUp();
+  try{
+    const r=await SD.check();
+    if(!r||!r.ok)up={stage:'idle',msg:r&&r.needsInstaller?'A newer version needs a full installer. Download it from GitHub.':'Couldn’t check. Make sure you’re online.'};
+    else if(r.newer&&!r.rejected)up={stage:'available',latest:r.latest};
+    else if(r.rejected)up={stage:'idle',msg:'Version '+r.latest+' didn’t start properly on this computer and was rolled back.'};
+    else up={stage:'uptodate'};
+  }catch(e){up=keep.stage=='available'||keep.stage=='ready'?keep:{stage:'idle',msg:'Couldn’t check. Make sure you’re online.'}}
+  renderUp();
+}
+async function upDownload(){
+  up={stage:'downloading',latest:up.latest};renderUp();
+  try{const r=await SD.download();up=r&&r.ok?{stage:'ready',latest:r.version}:{stage:'failed',msg:(r&&r.error)||'Download failed.'}}
+  catch(e){up={stage:'failed',msg:'Download failed.'}}
+  renderUp();
+}
+$('upGo').onclick=()=>{
+  if(up.stage=='available')upDownload();
+  else if(up.stage=='ready'){if(confirm('Skein will reload now. Your chats and friends are kept. Continue?'))SD.apply()}
+  else upCheck();
+};
+$('upReset').onclick=async()=>{if(confirm('Go back to the version that came with the installer? Your chats and friends are kept.'))SD.reset()};
+if(SD){SD.info().then(i=>{upInfo=i;renderUp()}).catch(()=>{});setTimeout(upCheck,6000);setInterval(upCheck,6*36e5)}
+$('bSet').onclick=()=>{$('st').classList.add('show');renderSettings();renderUp()};
 $('stX').onclick=()=>$('st').classList.remove('show');
 $('thA').onclick=()=>setTheme('auto');$('thL').onclick=()=>setTheme('light');$('thD').onclick=()=>setTheme('dark');
 $('stRen').onclick=async()=>{const n=await askText('Your display name',myName);if(!n)return;myName=n.slice(0,20);localStorage.setItem('sk_name',myName);profChanged();friendsRehi();renderSettings()};
@@ -702,6 +749,7 @@ $('bMic').onclick=async()=>{if(arec&&arec.state=='recording'){arec.stop();return
 (async()=>{
   const fs=await tx('friends','readonly',s=>s.getAll());fs.forEach(f=>friends[f.id]=f);{const last=localStorage.getItem('sk_last');cur=fs.some(f=>f.id==last)?last:fs[0]&&fs[0].id}
   await render();
+  try{if(SD)SD.ready()}catch(e){}
   if(!localStorage.getItem('sk_name')){const n=await askText('Welcome! Pick a display name for your friends to see');myName=(n||'Me').slice(0,20);localStorage.setItem('sk_name',myName)}
   if(typeof Peer=='undefined'){toast('Couldn’t load the connection library. Check your internet.');return}
   await initKeys();
