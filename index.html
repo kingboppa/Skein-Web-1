@@ -57,17 +57,18 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
 #camT{position:relative;z-index:2;color:#fff;font-size:14px;text-shadow:0 1px 4px #000;margin-bottom:12px}
 #shut{position:relative;z-index:2;width:78px;height:78px;border-radius:50%;border:5px solid #fff;background:rgba(255,255,255,.25);margin-bottom:calc(30px + env(safe-area-inset-bottom,0px));touch-action:none;user-select:none;-webkit-user-select:none;transition:transform .15s,background .15s}
 #shut.recording{background:#e5383b;transform:scale(1.25)}
-.zrow{position:relative;z-index:2;display:flex;gap:10px;align-items:center;color:#fff;width:80%;max-width:320px;margin-bottom:10px;text-shadow:0 1px 4px #000}.zrow input{flex:1}.cbtn.on{background:var(--accent)!important;color:#1a1a1a}.btn.on{background:#e5383b;color:#fff}.sv{margin-top:6px;border:0;border-radius:99px;padding:6px 12px;background:var(--surface);color:var(--ink);cursor:pointer;font-size:13px}.btn.sel{background:var(--accent);color:#1a1a1a}.btn:disabled{opacity:.5}</style>
+.zrow{position:relative;z-index:2;display:flex;gap:10px;align-items:center;color:#fff;width:80%;max-width:320px;margin-bottom:10px;text-shadow:0 1px 4px #000}.zrow input{flex:1}.cbtn.on{background:var(--accent)!important;color:#1a1a1a}.btn.on{background:#e5383b;color:#fff}.sv{margin-top:6px;border:0;border-radius:99px;padding:6px 12px;background:var(--surface);color:var(--ink);cursor:pointer;font-size:13px}.btn.sel{background:var(--accent);color:#1a1a1a}.btn:disabled{opacity:.5}.hasbg .empty{background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:12px;opacity:.95}</style>
 </head>
 <body>
 <div class="app">
   <header><h1 style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 64 64" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="16" fill="#1f1b3d"/><g fill="none" stroke-width="2.4" stroke-linecap="round"><path d="M9 38C14 10 44 6 52 24C58 38 34 58 24 40C18 27 40 18 55 44" stroke="#ff6b6b"/><path d="M12 52C8 24 30 12 40 28C48 42 22 50 20 32C19 22 36 10 54 16" stroke="#2dd4bf"/><path d="M8 22C22 36 30 60 46 50C58 44 56 22 40 22C26 22 22 44 44 56" stroke="#c4b5fd"/></g><g fill="#fff" stroke="#1f1b3d" stroke-width="1.4"><circle cx="9" cy="38" r="3"/><circle cx="55" cy="44" r="3"/><circle cx="12" cy="52" r="3"/><circle cx="54" cy="16" r="3"/><circle cx="8" cy="22" r="3"/><circle cx="44" cy="56" r="3"/></g></svg>Skein</h1><span><button class="badge" id="bAdd" style="border:0;cursor:pointer">+ Friend</button> <button class="badge" id="bId" style="border:0;cursor:pointer">My ID</button> <button class="badge" id="bStr" style="border:0;cursor:pointer" aria-label="Streaks">🔥</button> <button class="badge" id="bSet" style="border:0;cursor:pointer" aria-label="Settings">⚙️</button></span></header>
   <div class="strip" id="strip"></div>
-  <div class="stat" id="stat"></div>
+  <div style="display:flex;align-items:center;border-bottom:1px solid var(--line)"><div class="stat" id="stat" style="flex:1;border-bottom:0"></div><button class="badge" id="bFr" style="border:0;cursor:pointer;margin-right:10px;background:var(--them);color:var(--ink)" aria-label="Friend options">⋯</button></div>
   <div id="msgs"></div>
-  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.3.0</span></div>
+  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.4.0</span></div>
   <div class="bar">
     <input type="file" id="pic" accept="image/*,video/*" hidden>
+    <input type="file" id="bgIn" accept="image/*" hidden>
         <button class="ic" id="bCam" title="Camera">📸</button>
     <button class="ic" id="bPic" title="Photo or video from gallery">🖼</button>
     <button class="ic" id="bMic" title="Voice note">🎤</button>
@@ -121,8 +122,21 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
   <button class="btn g" id="lkUse">Use an account from another device</button>
   <div style="font-size:12px;color:var(--mute)">Linked devices share your friends, chats and streaks while they are online together. Anyone who holds a linked device can read your chats, so keep your devices locked.</div>
   <hr style="width:100%;border:0;border-top:1px solid var(--line)">
+  <div style="font-size:14px;font-weight:600">Chat background (all chats)</div>
+  <div class="row" style="max-width:none"><button class="btn g" id="stBg" style="flex:1">🖼 Choose image</button><button class="btn g" id="stBgX">Remove</button></div>
+  <div style="font-size:12px;color:var(--mute)">Saved on this device only. Pick one per friend from the ⋯ button in a chat.</div>
+  <hr style="width:100%;border:0;border-top:1px solid var(--line)">
   <div style="font-size:12px;color:var(--mute)" id="stVer"></div>
   <button class="btn g" id="stX">Close</button>
+</div></div>
+<div class="modal" id="fo"><div style="background:var(--surface);color:var(--ink);padding:18px;border-radius:16px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:10px">
+  <h3 id="foT" style="margin:0"></h3>
+  <div style="font-size:13px;color:var(--mute)" id="foSub"></div>
+  <button class="btn" id="foRen">✏️ Rename</button>
+  <div style="font-size:14px;font-weight:600">Chat background</div>
+  <div class="row" style="max-width:none"><button class="btn g" id="foBg" style="flex:1">🖼 Choose image</button><button class="btn g" id="foBgX">Remove</button></div>
+  <div style="font-size:12px;color:var(--mute)">Only for this chat, and only on this device. Without one, this chat uses the background you set for all chats in Settings.</div>
+  <button class="btn g" id="foX">Close</button>
 </div></div>
 <div class="modal" id="ask"><div style="background:var(--surface);color:var(--ink);padding:18px;border-radius:16px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:12px">
   <div id="askT" style="font-size:15px"></div>
@@ -147,11 +161,14 @@ async function copyText(t){
   try{const a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;opacity:0';document.body.appendChild(a);a.select();const ok=document.execCommand('copy');a.remove();return ok}catch(e){return false}
 }
 /* ---------- on-device storage (IndexedDB) ---------- */
-const DB=new Promise((ok,no)=>{const r=indexedDB.open('skein',1);r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore('friends',{keyPath:'id'});d.createObjectStore('msgs',{keyPath:'id',autoIncrement:true}).createIndex('f','f')};r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
+const DB=new Promise((ok,no)=>{const r=indexedDB.open('skein',2);r.onblocked=()=>toast('Close any other open Skein windows to finish updating.');r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains('friends'))d.createObjectStore('friends',{keyPath:'id'});if(!d.objectStoreNames.contains('msgs'))d.createObjectStore('msgs',{keyPath:'id',autoIncrement:true}).createIndex('f','f');if(!d.objectStoreNames.contains('prefs'))d.createObjectStore('prefs',{keyPath:'k'})};r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
 const tx=(s,m,fn)=>DB.then(d=>new Promise((ok,no)=>{const t=d.transaction(s,m),q=fn(t.objectStore(s));t.oncomplete=()=>ok(q&&q.result);t.onerror=()=>no(t.error)}));
 const msgsOf=f=>tx('msgs','readonly',s=>s.index('f').getAll(f));
 const putMsg=m=>tx('msgs','readwrite',s=>s.put(m));
 const putFriend=f=>tx('friends','readwrite',s=>s.put(f));
+const getPref=k=>tx('prefs','readonly',s=>s.get(k));
+const putPref=(k,blob)=>tx('prefs','readwrite',s=>s.put({k,blob}));
+const delPref=k=>tx('prefs','readwrite',s=>s.delete(k));
 /* ---------- identity ---------- */
 const rid=n=>Array.from(crypto.getRandomValues(new Uint8Array(n)),b=>'abcdefghjkmnpqrstuvwxyz23456789'[b%31]).join('');
 let myId=localStorage.getItem('sk_id');if(!myId){myId='sk-'+rid(10);localStorage.setItem('sk_id',myId)}
@@ -178,7 +195,7 @@ const enc=s=>new TextEncoder().encode(s);
 async function signFor(dev){if(!myPriv)return null;return new Uint8Array(await SUB.sign(SIG,myPriv,enc(myId+'>'+dev)))}
 async function verifyFrom(jwk,sig,dev){try{const k=await SUB.importKey('jwk',{kty:jwk.kty,crv:jwk.crv,x:jwk.x,y:jwk.y},ALG,false,['verify']);return await SUB.verify(SIG,k,new Uint8Array(sig),enc(dev+'>'+myId))}catch(e){return false}}
 /* ---------- theme: auto / light / dark ---------- */
-const APP_VERSION='1.3.0';
+const APP_VERSION='1.4.0';
 function getTheme(){try{const t=localStorage.getItem('sk_theme');return t=='light'||t=='dark'?t:'auto'}catch(e){return'auto'}}
 function applyTheme(t){
   if(t=='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);
@@ -188,6 +205,8 @@ function applyTheme(t){
 applyTheme(getTheme());
 function setTheme(t){try{localStorage.setItem('sk_theme',t)}catch(e){}applyTheme(t);renderSettings()}
 try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(getTheme()=='auto')applyTheme('auto')})}catch(e){}
+const dn=f=>f.nick||f.name;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const EM=['🦊','🐼','🐸','🐙','🦄','🐯','🐨','🐧'];
 const myOff=new Date().getTimezoneOffset();let myPz=[];try{myPz=JSON.parse(localStorage.getItem('sk_pz')||'[]')}catch(e){}
 let friends={},cur=null,conns={},unread=new Set(),urls={},peer=null;
@@ -264,7 +283,7 @@ async function onData(c,d){
   const id=c.acct;if(!friends[id])return;
   if(d.k=='pz'){friends[id].theirPz=d.r;putFriend(friends[id]);render();return}
   if(d.k=='base'){const f=friends[id];if((f.base&&f.base.ts>=d.ts)||f.declined===d.ts)return;
-    if(confirm(f.name+' says your streak is '+d.n+' day'+(d.n==1?'':'s')+'. Accept?'))f.base={n:d.n,ts:d.ts};else f.declined=d.ts;
+    if(confirm(dn(f)+' says your streak is '+d.n+' day'+(d.n==1?'':'s')+'. Accept?'))f.base={n:d.n,ts:d.ts};else f.declined=d.ts;
     await putFriend(f);toSibs({k:'fr',list:[frPack(f)]});render();return}
   if(d.k=='ack'){const ms=await msgsOf(id);const m=ms.find(x=>x.uid==d.uid);if(m){m.pend=false;await putMsg(m);if(id==cur)render()}return}
   if(d.k=='m'){
@@ -324,6 +343,7 @@ async function mergeFriends(list){
     if(r.base&&(!f.base||r.base.ts>f.base.ts)){f.base=r.base;ch=true}
     if(r.declined&&!f.declined){f.declined=r.declined;ch=true}
     if(r.pub&&!f.pub){f.pub=r.pub;ch=true}
+    if((r.nickTs||0)>(f.nickTs||0)){f.nick=String(r.nick||'').slice(0,30);f.nickTs=r.nickTs;ch=true}
     if(r.theirPz&&!f.theirPz){f.theirPz=r.theirPz;ch=true}
     if(ch)await putFriend(f);
   }
@@ -401,8 +421,8 @@ async function sendMsg(t,payload,once,secs){
   friendConns(cur).forEach(c=>transmit(c,m));
   sibForward(Object.assign({},m,{pend:false}));
 }
-async function addFriend(id,name,n0,hint){
-  const f={id,name:name||id,e:EM[[...id].reduce((a,c)=>a+c.charCodeAt(0),0)%EM.length],devs:[...new Set([id,...(hint||[])])]};
+async function addFriend(id,name,n0,hint,nick){
+  const f={id,name:name||id,e:EM[[...id].reduce((a,c)=>a+c.charCodeAt(0),0)%EM.length],devs:[...new Set([id,...(hint||[])])],nick:nick||'',nickTs:nick?Date.now():0};
   friends[id]=f;await putFriend(f);toSibs({k:'fr',list:[frPack(f)]});if(!cur)cur=id;f.devs.forEach(connect);if(n0>0)await setBase(id,n0);render();
 }
 $('bAdd').onclick=async()=>{
@@ -414,7 +434,7 @@ $('bAdd').onclick=async()=>{
   if(friends[id])return toast('You already added them');
   const n=await askText('What should we call them?');if(n===null)return;
   const sn=parseInt(await askText('Already have a streak with them? Enter its length in days (0 for none).','0'),10)||0;
-  await addFriend(id,n||id,Math.max(0,sn),parts.slice(1));
+  await addFriend(id,n||id,Math.max(0,sn),parts.slice(1),n||'');
 };
 $('bId').onclick=async()=>{
   const code=shareCode();
@@ -439,6 +459,43 @@ $('stRen').onclick=async()=>{const n=await askText('Your display name',myName);i
 $('lkNew').onclick=()=>{pendingLink={s:rid(8),exp:Date.now()+6e5,tries:0};$('lkCode').value=myId+'~'+pendingLink.s;renderSettings()};
 $('lkCopy').onclick=async()=>{if(await copyText($('lkCode').value))toast('Link code copied');else{$('lkCode').select()}};
 $('lkUse').onclick=()=>startLink();
+/* ---------- friend options and chat backgrounds (backgrounds stay on this device) ---------- */
+let bgUrls={},bgTarget=null;
+async function bgUrl(k){if(k in bgUrls)return bgUrls[k];const r=await getPref(k);return bgUrls[k]=r&&r.blob?URL.createObjectURL(r.blob):null}
+async function applyBg(){
+  const box=$('msgs');let u=cur?await bgUrl('bg:'+cur):null;if(!u)u=await bgUrl('bg:all');
+  if(u){box.style.backgroundImage='linear-gradient(rgba(0,0,0,.10),rgba(0,0,0,.10)),url('+u+')';box.style.backgroundSize='cover';box.style.backgroundPosition='center';box.classList.add('hasbg')}
+  else{box.style.backgroundImage='';box.classList.remove('hasbg')}
+}
+async function setBg(k,blob){const old=bgUrls[k];if(blob)await putPref(k,blob);else await delPref(k);if(old)URL.revokeObjectURL(old);delete bgUrls[k];await applyBg()}
+async function processBg(file){
+  const url=URL.createObjectURL(file);
+  try{
+    const img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=url});
+    const sc=Math.min(1,1280/Math.max(img.width,img.height)),c=document.createElement('canvas');
+    c.width=Math.max(1,Math.round(img.width*sc));c.height=Math.max(1,Math.round(img.height*sc));
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    return await new Promise(ok=>c.toBlob(ok,'image/jpeg',.82));
+  }finally{URL.revokeObjectURL(url)}
+}
+function pickBg(k){bgTarget=k;$('bgIn').click()}
+$('bgIn').onchange=async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f||!bgTarget)return;const k=bgTarget;bgTarget=null;
+  try{const b=await processBg(f);if(!b)throw 0;await setBg(k,b);toast('Background set')}catch(x){toast('Couldn’t use that image. Try another one.')}
+};
+function openFo(){
+  const f=friends[cur];if(!f)return;
+  $('foT').textContent=dn(f);$('foSub').textContent=f.nick?'Their own name: '+f.name:'Showing the name they chose. Rename to use your own.';
+  $('fo').classList.add('show');
+}
+$('bFr').onclick=openFo;$('foX').onclick=()=>$('fo').classList.remove('show');
+$('foRen').onclick=async()=>{
+  const f=friends[cur];if(!f)return;
+  const v=await askText('Name for this friend (leave empty to use their own name, “'+f.name+'”)',dn(f));if(v===null)return;
+  f.nick=v.slice(0,30);f.nickTs=Date.now();await putFriend(f);toSibs({k:'fr',list:[frPack(f)]});await render();openFo();
+};
+$('foBg').onclick=()=>{if(cur)pickBg('bg:'+cur)};$('foBgX').onclick=()=>{if(cur)setBg('bg:'+cur,null)};
+$('stBg').onclick=()=>pickBg('bg:all');$('stBgX').onclick=()=>setBg('bg:all',null);
 /* ---------- streaks ---------- */
 let info={};
 const sharedOff=f=>myAcct<f.id?myOff:(f.tz!=null?f.tz:myOff);
@@ -464,16 +521,16 @@ async function setBase(id,n){
   friendConns(id).forEach(c=>c.send({k:'base',n,ts:f.base.ts}));await render();
 }
 function statText(f){
-  const s=info[f.id]||{n:0},p=[online(f)?f.name+' is online':f.name+' is offline. Messages send when you’re both online.'];
+  const s=info[f.id]||{n:0},p=[online(f)?dn(f)+' is online':dn(f)+' is offline. Messages send when you’re both online.'];
   if(s.n>0)p.push('🔥 '+s.n+'-day streak');
   const mine=isPaused(),theirs=(f.theirPz||[]).some(r=>r[0]<=Date.now()&&(r[1]==null||r[1]>Date.now()));
-  if(mine||theirs)p.push('⏸ streaks paused'+(mine&&theirs?' by both of you':mine?' by you':' by '+f.name));
-  else if(s.n>0||s.mine||s.theirs)p.push(s.mine&&s.theirs?'✅ today’s photos and videos are done':s.mine?'waiting on '+f.name+'’s photo or video':s.theirs?'your turn: send a photo or video':'send each other a photo or video today');
+  if(mine||theirs)p.push('⏸ streaks paused'+(mine&&theirs?' by both of you':mine?' by you':' by '+dn(f)));
+  else if(s.n>0||s.mine||s.theirs)p.push(s.mine&&s.theirs?'✅ today’s photos and videos are done':s.mine?'waiting on '+dn(f)+'’s photo or video':s.theirs?'your turn: send a photo or video':'send each other a photo or video today');
   return p.join(' · ');
 }
 function openSm(){
   const f=friends[cur];if(!f)return toast('Add a friend first');const s=info[cur]||{n:0};
-  $('smT').textContent='🔥 Streak with '+f.name;
+  $('smT').textContent='🔥 Streak with '+dn(f);
   $('smS').textContent=(s.n>0?s.n+'-day streak. ':'No streak yet. ')+'A day counts when you both send each other a photo or video.';
   $('smN').value=s.n||'';
   $('smP').textContent=isPaused()?'⏸ Your streaks are paused. Friends are told, and days away won’t count against anyone.':'Going away for a while? Pause streaks so no days count against you or your friends.';
@@ -481,7 +538,7 @@ function openSm(){
   $('sm').classList.add('show');
 }
 $('bStr').onclick=openSm;$('smX').onclick=()=>$('sm').classList.remove('show');
-$('smSet').onclick=async()=>{const n=parseInt($('smN').value,10);if(!(n>=0))return toast('Enter a number of days');await setBase(cur,n);toast('Streak set to '+n+'. '+friends[cur].name+' will be asked to confirm.');openSm()};
+$('smSet').onclick=async()=>{const n=parseInt($('smN').value,10);if(!(n>=0))return toast('Enter a number of days');await setBase(cur,n);toast('Streak set to '+n+'. '+dn(friends[cur])+' will be asked to confirm.');openSm()};
 $('smPause').onclick=()=>{
   if(isPaused())myPz.forEach(r=>{if(r[1]==null||r[1]>Date.now())r[1]=Date.now()});
   else{const v=$('smD').value;let u=null;if(v){const[y,m,dd]=v.split('-').map(Number);u=new Date(y,m-1,dd+1).getTime()-1;if(u<Date.now())return toast('Pick a date in the future')}myPz.push([Date.now(),u])}
@@ -489,17 +546,17 @@ $('smPause').onclick=()=>{
 };
 /* ---------- UI ---------- */
 function urlFor(m){if(!m.blob)return'';return urls[m.id]||(urls[m.id]=URL.createObjectURL(m.blob))}
-async function render(){const _i={};await Promise.all(Object.values(friends).map(async f=>{_i[f.id]=streak(f,await msgsOf(f.id))}));info=_i;
+async function render(){const _i={};await Promise.all(Object.values(friends).map(async f=>{_i[f.id]=streak(f,await msgsOf(f.id))}));info=_i;$('bFr').style.display=friends[cur]?'':'none';applyBg();
   $('strip').innerHTML='';
   Object.values(friends).forEach(f=>{
     const b=document.createElement('button');b.className='fr'+(f.id==cur?' on':'');
     b.innerHTML=(online(f)?'<i class="dot"></i>':'')+(unread.has(f.id)?'<i class="dot u"></i>':'')+'<span>'+f.e+'</span>';
-    b.append(f.name);const _s=info[f.id];if(_s&&_s.n>0){const sm=document.createElement('small');sm.textContent='🔥'+_s.n+(_s.paused?'⏸':_s.risk?'⏳':'');b.append(document.createElement('br'),sm)}b.onclick=()=>{cur=f.id;unread.delete(f.id);render()};$('strip').appendChild(b)});
+    b.append(dn(f));const _s=info[f.id];if(_s&&_s.n>0){const sm=document.createElement('small');sm.textContent='🔥'+_s.n+(_s.paused?'⏸':_s.risk?'⏳':'');b.append(document.createElement('br'),sm)}b.onclick=()=>{cur=f.id;unread.delete(f.id);render()};$('strip').appendChild(b)});
   const box=$('msgs'),f=friends[cur];
   if(!f){$('stat').textContent='Your ID: '+shareCode();box.innerHTML='<div class="empty">No friends yet.<br>Tap “My ID” to share yours, or “+ Friend” to add theirs.<br>Everything stays on your device.</div>';return}
   $('stat').textContent=statText(f);
   const ms=(await msgsOf(cur)).sort((a,b)=>a.ts-b.ts);
-  box.innerHTML='';if(!ms.length)box.innerHTML='<div class="empty">Say hi to '+f.name+'.</div>';
+  box.innerHTML='';if(!ms.length)box.innerHTML='<div class="empty">Say hi to '+esc(dn(f))+'.</div>';
   ms.forEach(m=>{
     const d=document.createElement('div');d.className='m'+(m.me?' me':'');
     if(m.t=='text')d.textContent=m.text;
