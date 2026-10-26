@@ -58,7 +58,7 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
 #camT{position:relative;z-index:2;color:#fff;font-size:14px;text-shadow:0 1px 4px #000;margin-bottom:12px}
 #shut{position:relative;z-index:2;width:78px;height:78px;border-radius:50%;border:5px solid #fff;background:rgba(255,255,255,.25);margin-bottom:calc(30px + env(safe-area-inset-bottom,0px));touch-action:none;user-select:none;-webkit-user-select:none;transition:transform .15s,background .15s}
 #shut.recording{background:#e5383b;transform:scale(1.25)}
-.zrow{position:relative;z-index:2;display:flex;gap:10px;align-items:center;color:#fff;width:80%;max-width:320px;margin-bottom:10px;text-shadow:0 1px 4px #000}.zrow input{flex:1}.cbtn.on{background:var(--accent)!important;color:var(--on)}.btn.on{background:#e5383b;color:#fff}.sv{margin-top:6px;border:0;border-radius:99px;padding:6px 12px;background:var(--surface);color:var(--ink);cursor:pointer;font-size:13px}.btn.sel{background:var(--accent);color:var(--on)}.btn:disabled{opacity:.5}.hasbg .empty{background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:12px;opacity:.95}.fr .dot{top:38px;left:50%;margin:0 0 0 14px}.fr .dot.u{top:-4px;margin:0 0 0 8px;width:auto;min-width:18px;height:18px;padding:0 4px;border-radius:99px;background:var(--accent);color:var(--on);font:700 11px/14px system-ui,sans-serif;text-align:center}.tb.upd{position:relative}.tb.upd::after{content:"";position:absolute;top:5px;right:5px;width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid var(--accent);box-sizing:content-box}#st,#fo,#sm,#ask,#perm{overscroll-behavior:contain;touch-action:none}#st>div,#fo>div,#sm>div,#ask>div,#perm>div{overscroll-behavior:contain;touch-action:pan-y}</style>
+.zrow{position:relative;z-index:2;display:flex;gap:10px;align-items:center;color:#fff;width:80%;max-width:320px;margin-bottom:10px;text-shadow:0 1px 4px #000}.zrow input{flex:1}.cbtn.on{background:var(--accent)!important;color:var(--on)}.btn.on{background:#e5383b;color:#fff}.sv{margin-top:6px;border:0;border-radius:99px;padding:6px 12px;background:var(--surface);color:var(--ink);cursor:pointer;font-size:13px}.btn.sel{background:var(--accent);color:var(--on)}.btn:disabled{opacity:.5}.hasbg .empty{background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:12px;opacity:.95}.fr .dot{top:38px;left:50%;margin:0 0 0 14px}.fr .dot.u{top:-4px;margin:0 0 0 8px;width:auto;min-width:18px;height:18px;padding:0 4px;border-radius:99px;background:var(--accent);color:var(--on);font:700 11px/14px system-ui,sans-serif;text-align:center}.tb.upd{position:relative}.tb.upd::after{content:"";position:absolute;top:5px;right:5px;width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid var(--accent);box-sizing:content-box}#st,#fo,#sm,#ask,#perm,#msgm,#dis{overscroll-behavior:contain;touch-action:none}#st>div,#fo>div,#sm>div,#ask>div,#perm>div,#msgm>div,#dis>div{overscroll-behavior:contain;touch-action:pan-y}.kp{font-size:11px;color:var(--mute);margin-top:3px}.m .tap{cursor:pointer}</style>
 </head>
 <body>
 <div class="app">
@@ -66,7 +66,7 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
   <div class="strip" id="strip"></div>
   <div style="display:flex;align-items:center;border-bottom:1px solid var(--line)"><div class="stat" id="stat" style="flex:1;border-bottom:0"></div><button class="badge" id="bUn" style="display:none;border:0;cursor:pointer;margin-right:6px" aria-label="Jump to unread chat"></button><button class="badge" id="bFr" style="border:0;cursor:pointer;margin-right:10px;background:var(--them);color:var(--ink)" aria-label="Friend options">⋯</button></div>
   <div id="msgs"></div>
-  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.7.4</span></div>
+  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.8.0</span></div>
   <div class="bar">
     <input type="file" id="pic" accept="image/*,video/*" hidden>
     <input type="file" id="bgIn" accept="image/*" hidden>
@@ -123,6 +123,9 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
   <button class="btn g" id="lkUse">Use an account from another device</button>
   <div style="font-size:12px;color:var(--mute)">Linked devices share your friends, chats and streaks while they are online together. Anyone who holds a linked device can read your chats, so keep your devices locked.</div>
   <hr style="width:100%;border:0;border-top:1px solid var(--line)">
+  <div style="font-size:14px;font-weight:600">Disappearing chats</div>
+  <div style="font-size:12px;color:var(--mute)">Messages are deleted from this device about 24 hours after you see them. Tap a message or photo and choose “Keep in chat” to hold on to it. Kept items stay on this device only.</div>
+  <hr style="width:100%;border:0;border-top:1px solid var(--line)">
   <div style="font-size:14px;font-weight:600">Camera &amp; microphone</div>
   <div id="pmSt" style="font-size:13px"></div>
   <button class="btn" id="pmGo">Allow camera &amp; microphone</button>
@@ -166,6 +169,20 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
   <div id="pmRes" style="font-size:14px;font-weight:600"></div>
   <div id="pmHow" style="font-size:12px;color:var(--mute)"></div>
   <button class="btn" id="pmOk">Allow</button><button class="btn g" id="pmNo">Not now</button>
+</div></div>
+<div class="modal" id="msgm"><div style="background:var(--surface);color:var(--ink);padding:18px;border-radius:16px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:10px">
+  <h3 id="mmT" style="margin:0"></h3>
+  <div id="mmSub" style="font-size:13px;color:var(--mute)"></div>
+  <button class="btn" id="mmKeep"></button>
+  <button class="btn g" id="mmSave" style="display:none">💾 Save to this device</button>
+  <button class="btn g" id="mmX">Close</button>
+  <div style="font-size:12px;color:var(--mute)">Kept and saved items stay on this device only. Nothing is sent anywhere, and your other devices are not changed.</div>
+</div></div>
+<div class="modal" id="dis"><div style="background:var(--surface);color:var(--ink);padding:18px;border-radius:16px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:10px">
+  <h3 style="margin:0">⏳ Chats disappear</h3>
+  <div style="font-size:14px">Messages, photos and videos are deleted from this device about 24 hours after you see them. This applies to your existing chats too, so keep anything you want first.</div>
+  <div style="font-size:14px">To keep something, tap it and choose “Keep in chat”. For photos, videos and voice notes you can also save a copy to this device. Kept items never leave this device.</div>
+  <button class="btn" id="disOk">Got it</button>
 </div></div>
 <div class="modal" id="ask"><div style="background:var(--surface);color:var(--ink);padding:18px;border-radius:16px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:12px">
   <div id="askT" style="font-size:15px"></div>
@@ -224,7 +241,7 @@ const enc=s=>new TextEncoder().encode(s);
 async function signFor(dev){if(!myPriv)return null;return new Uint8Array(await SUB.sign(SIG,myPriv,enc(myId+'>'+dev)))}
 async function verifyFrom(jwk,sig,dev){try{const k=await SUB.importKey('jwk',{kty:jwk.kty,crv:jwk.crv,x:jwk.x,y:jwk.y},ALG,false,['verify']);return await SUB.verify(SIG,k,new Uint8Array(sig),enc(dev+'>'+myId))}catch(e){return false}}
 /* ---------- theme: auto / light / dark ---------- */
-const APP_VERSION='1.7.4';
+const APP_VERSION='1.8.0';
 function getTheme(){try{const t=localStorage.getItem('sk_theme');return t=='light'||t=='dark'?t:'auto'}catch(e){return'auto'}}
 function applyTheme(t){
   if(t=='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);
@@ -472,7 +489,7 @@ async function sibSync(c){
   c.send({k:'devs',list:myDevs});
   if(mbTs)c.send({k:'mb',url:mbUrl,ts:mbTs});
   c.send({k:'prof',name:myName,pz:myPz,ts:+localStorage.getItem('sk_pzts')||0});
-  const items=[];for(const f of Object.values(friends))for(const m of await msgsOf(f.id))items.push([f.id,m.uid,m.done?1:0,m.me||m.read!==false?1:0]);
+  const items=[];for(const f of Object.values(friends))for(const m of await msgsOf(f.id)){if(!m.gone)items.push([f.id,m.uid,m.done?1:0,m.me||m.read!==false?1:0])};
   c.send({k:'inv',items});
 }
 async function onSib(c,d){
@@ -489,7 +506,7 @@ async function onSib(c,d){
   }
   if(d.k=='need'){
     const by={};
-    for(const it of d.list||[]){const[f,uid]=it;if(!friends[f])continue;by[f]=by[f]||await msgsOf(f);const m=by[f].find(x=>x.uid==uid);if(m)c.send(await packMsg(m))}
+    for(const it of d.list||[]){const[f,uid]=it;if(!friends[f])continue;by[f]=by[f]||await msgsOf(f);const m=by[f].find(x=>x.uid==uid);if(m&&!m.gone)c.send(await packMsg(m))}
     return;
   }
   if(d.k=='sm'){
@@ -806,24 +823,29 @@ async function render(){const _i={},_u={};await Promise.all(Object.values(friend
   const box=$('msgs'),f=friends[cur];
   if(!f){$('stat').textContent='Your ID: '+shareCode();box.innerHTML='<div class="empty">No friends yet.<br>Tap “My ID” to share yours, or “+ Friend” to add theirs.<br>Everything stays on your device.</div>';return}
   $('stat').textContent=statText(f);
-  const ms=(await msgsOf(cur)).sort((a,b)=>a.ts-b.ts);
-  box.innerHTML='';if(!ms.length)box.innerHTML='<div class="empty">Say hi to '+esc(dn(f))+'.</div>';
+  const all=(await msgsOf(cur)).sort((a,b)=>a.ts-b.ts);
+  if(!document.hidden&&autoRead){const t=Date.now();for(const m of all)if(!m.seen&&!m.gone){m.seen=t;await putMsg(m)}}
+  const ms=all.filter(m=>!m.gone);
+  box.innerHTML='';if(!ms.length)box.innerHTML='<div class="empty">'+(all.length?'Earlier messages have disappeared. Say hi to ':'Say hi to ')+esc(dn(f))+'.</div>';
   ms.forEach(m=>{
     const d=document.createElement('div');d.className='m'+(m.me?' me':'');
-    if(m.t=='text')d.textContent=m.text;
+    if(m.t=='text'){d.textContent=m.text;d.classList.add('tap');d.onclick=()=>openMsgMenu(m)}
     else if(m.once||!m.blob){
       d.innerHTML='<div class="snap'+(m.done?' done':'')+'">'+(m.t=='img'?'📷':m.t=='video'?'🎥':'🎤')+(m.done?' Opened':m.me?' Sent · tap to preview':' Tap to view')+(m.secs&&!m.done?' · ⏱ '+m.secs+'s':'')+'</div>';
       if(!m.done)d.firstChild.onclick=()=>openSnap(m);
     }else if(m.t=='audio')d.innerHTML='<audio controls src="'+urlFor(m)+'"></audio>';
-    else d.innerHTML=m.t=='img'?'<img src="'+urlFor(m)+'">':'<video controls playsinline src="'+urlFor(m)+'"></video>';
-    if(m.t=='video'&&m.blob&&!m.once){const sb=document.createElement('button');sb.className='sv';sb.textContent='💾 Save video';sb.onclick=()=>saveVideo(m);d.appendChild(sb)}
+    else if(m.t=='img'){d.innerHTML='<img src="'+urlFor(m)+'">';d.classList.add('tap');d.onclick=()=>openMsgMenu(m)}
+    else d.innerHTML='<video controls playsinline src="'+urlFor(m)+'"></video>';
+    if((m.t=='video'||m.t=='audio')&&m.blob&&!m.once){const sb=document.createElement('button');sb.className='sv';sb.textContent='💾 Save or keep';sb.onclick=()=>openMsgMenu(m);d.appendChild(sb)}
+    if(m.saved){const k=document.createElement('div');k.className='kp';k.textContent='📌 Kept on this device';d.appendChild(k)}
     if(m.me&&m.pend){const s=document.createElement('div');s.style.cssText='font-size:11px;color:var(--mute)';s.textContent='⏳ waiting to send';d.appendChild(s)}
     box.appendChild(d)});
   box.scrollTop=box.scrollHeight;
 }
-async function saveVideo(m){
-  const ty=(m.blob.type||'video/webm').split(';')[0],ext=ty.includes('mp4')?'mp4':ty.includes('quicktime')?'mov':'webm';
-  const name='skein-'+new Date(m.ts).toISOString().slice(0,19).replace(/[:T]/g,'-')+'.'+ext;
+const saveVideo=m=>saveMedia(m);
+async function saveMedia(m){
+  const ty=(m.blob.type||(m.t=='img'?'image/jpeg':m.t=='audio'?'audio/webm':'video/webm')).split(';')[0],ext=ty.includes('jpeg')?'jpg':ty.includes('png')?'png':ty.includes('webp')?'webp':ty.includes('m4a')||ty.includes('aac')?'m4a':ty.includes('mp4')?(m.t=='audio'?'m4a':'mp4'):ty.includes('quicktime')?'mov':ty.includes('ogg')?'ogg':'webm';
+  const name='skein-'+(m.t=='text'?'note':m.t)+'-'+new Date(m.ts).toISOString().slice(0,19).replace(/[:T]/g,'-')+'.'+ext;
   const file=new File([m.blob],name,{type:ty});
   try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});return}}catch(e){if(e.name=='AbortError')return}
   const a=document.createElement('a');a.href=URL.createObjectURL(m.blob);a.download=name;document.body.appendChild(a);a.click();a.remove();
@@ -927,7 +949,7 @@ $('pvOk').onclick=()=>{const b=closePv();if(b)sendMsg('video',b,$('once').checke
 let arec=null,ach=[],as=null;
 $('bMic').onclick=async()=>{if(arec&&arec.state=='recording'){arec.stop();return}try{as=await navigator.mediaDevices.getUserMedia({audio:true});ach=[];arec=new MediaRecorder(as,mimeOpt('audio'));arec.ondataavailable=e=>ach.push(e.data);arec.onstop=()=>{as.getTracks().forEach(t=>t.stop());$('bMic').classList.remove('rec');$('bMic').textContent='🎤';sendMsg('audio',new Blob(ach,{type:arec.mimeType}))};arec.start();$('bMic').classList.add('rec');$('bMic').textContent='⏹';toast('Recording… tap again to send')}catch(e){toast('Microphone blocked. Allow it in Settings → Camera & microphone.')}};
 /* keep the screen behind a popup still: swipes on the dark area do nothing */
-['st','fo','sm','ask','perm'].forEach(i=>{const m=$(i);if(m)m.addEventListener('touchmove',e=>{if(e.target===m)e.preventDefault()},{passive:false})});
+['st','fo','sm','ask','perm','msgm','dis'].forEach(i=>{const m=$(i);if(m)m.addEventListener('touchmove',e=>{if(e.target===m)e.preventDefault()},{passive:false})});
 {const st=$('st'),box=st&&st.firstElementChild;let ty=0;
   if(box){box.addEventListener('touchstart',e=>{ty=e.touches[0].clientY},{passive:true});
     box.addEventListener('touchmove',e=>{const dy=e.touches[0].clientY-ty,top=box.scrollTop<=0,end=box.scrollTop+box.clientHeight>=box.scrollHeight-1;
@@ -974,20 +996,55 @@ $('pmOk').onclick=async()=>{
   if(r.ok)setTimeout(()=>$('perm').classList.remove('show'),900);else $('pmOk').textContent='Done';
 };
 $('pmNo').onclick=()=>{try{localStorage.setItem('sk_permask','1')}catch(e){}$('perm').classList.remove('show')};
+/* ---------- disappearing chats and keeping messages (all on this device only) ---------- */
+const EXPIRE_MS=864e5-6e5;   // a little under 24 hours, so the 5-minute checks never run past a day
+async function sweepExpired(){
+  return inQ(async()=>{
+    const now=Date.now();let n=0;
+    for(const f of Object.values(friends))for(const m of await msgsOf(f.id)){
+      if(m.gone||m.saved||!m.seen||now-m.seen<EXPIRE_MS||(m.me&&m.pend))continue;
+      if(urls[m.id]){URL.revokeObjectURL(urls[m.id]);delete urls[m.id]}
+      /* keep only a stub: the id stops a late duplicate coming back, and streaks still count the day */
+      await putMsg({id:m.id,f:m.f,me:m.me,t:m.t,uid:m.uid,ts:m.ts,once:!!m.once,read:true,pend:false,seen:m.seen,gone:true});n++;
+    }
+    if(n)render();return n;
+  });
+}
+let mmM=null;
+function openMsgMenu(m){
+  if(!m||m.once||m.gone)return;mmM=m;
+  $('mmT').textContent=m.t=='text'?'Message':m.t=='img'?'Photo':m.t=='video'?'Video':'Voice note';
+  $('mmSub').textContent=m.saved?'Kept on this device, so it will not disappear.':'It disappears about 24 hours after you see it, unless you keep it.';
+  $('mmKeep').textContent=m.saved?'Stop keeping it':'📌 Keep in chat';
+  $('mmSave').style.display=m.blob?'':'none';
+  $('msgm').classList.add('show');
+}
+$('mmX').onclick=()=>{$('msgm').classList.remove('show');mmM=null};
+$('mmKeep').onclick=async()=>{
+  const m=mmM;$('msgm').classList.remove('show');mmM=null;if(!m)return;
+  let now=false;
+  await inQ(async()=>{const x=(await msgsOf(m.f)).find(y=>y.uid==m.uid);if(!x||x.gone)return;x.saved=!x.saved;now=x.saved;if(x.saved)x.savedAt=Date.now();else x.seen=Date.now();await putMsg(x)});
+  toast(now?'Kept on this device':'It will disappear 24 hours from now');render();
+};
+$('mmSave').onclick=async()=>{const m=mmM;$('msgm').classList.remove('show');mmM=null;if(m&&m.blob)await saveMedia(m)};
+function openDis(){$('dis').classList.add('show')}
+$('disOk').onclick=()=>{try{localStorage.setItem('sk_dis','1')}catch(e){}$('dis').classList.remove('show');if(!localStorage.getItem('sk_permask'))setTimeout(openPerm,400)};
+setInterval(sweepExpired,3e5);
 /* ---------- boot ---------- */
 (async()=>{
   const fs=await tx('friends','readonly',s=>s.getAll());fs.forEach(f=>friends[f.id]=f);{const last=localStorage.getItem('sk_last');cur=fs.some(f=>f.id==last)?last:fs[0]&&fs[0].id}
   await render();
   try{if(SD)SD.ready()}catch(e){}
   if(!localStorage.getItem('sk_name')){const n=await askText('Welcome! Pick a display name for your friends to see');myName=(n||'Me').slice(0,20);localStorage.setItem('sk_name',myName)}
-  if(!localStorage.getItem('sk_permask'))setTimeout(openPerm,700);
+  if(!localStorage.getItem('sk_dis'))setTimeout(openDis,500);else if(!localStorage.getItem('sk_permask'))setTimeout(openPerm,700);
+  sweepExpired();
   if(typeof Peer=='undefined'){toast('Couldn’t load the connection library. Check your internet.');return}
   await initKeys();
   startPeer();
   mbPull();
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
   if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!navigator.standalone&&!matchMedia('(display-mode: standalone)').matches)$('ios').style.display='flex';
-  document.addEventListener('visibilitychange',()=>{if(document.hidden||!peer)return;if(peer.destroyed)startPeer();else if(peer.disconnected)peer.reconnect();connectAll();mbPull();mbOutbox()});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)sweepExpired();if(document.hidden||!peer)return;if(peer.destroyed)startPeer();else if(peer.disconnected)peer.reconnect();connectAll();mbPull();mbOutbox()});
   if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
   const h=location.hash.match(/add=([\w-]+)/);if(h&&!friends[h[1]]&&h[1]!=myId){const n=await askText('Add this friend. What should we call them?');if(n)addFriend(h[1],n)}
   setInterval(()=>connectAll(),10000);setInterval(render,60000);let mbTick=0;setInterval(()=>{mbOutbox();if(++mbTick%3==0)mbPull()},20000);
