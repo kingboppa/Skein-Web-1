@@ -25,7 +25,7 @@ body{background:var(--bg);color:var(--ink);font:16px system-ui,-apple-system,Seg
 header{padding:10px 16px 8px;display:flex;flex-wrap:nowrap;align-items:center;gap:10px}.tools{flex:1;min-width:0;display:flex;justify-content:space-evenly;gap:6px}.tb{display:flex;align-items:center;justify-content:center;flex:0 0 auto;width:44px;height:44px;padding:0;border:0;border-radius:14px;background:var(--accent);color:var(--on);font:700 13px system-ui,-apple-system,Segoe UI,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent}.tb i{font-style:normal;font-size:22px;line-height:1}.tb:active{transform:scale(.96);filter:brightness(.92)}
 h1{margin:0;font-size:20px}
 .badge{font-size:12px;background:var(--accent);color:var(--on);padding:3px 8px;border-radius:99px;font-weight:600}
-.strip{display:flex;gap:10px;padding:4px 16px 10px;overflow-x:auto;border-bottom:1px solid var(--line)}
+.strip{display:flex;gap:10px;padding:4px 16px 10px;overflow-x:auto;border-bottom:1px solid var(--line);scrollbar-width:thin;scrollbar-color:var(--accent) transparent}.strip::-webkit-scrollbar{height:6px}.strip::-webkit-scrollbar-button{display:none}.strip::-webkit-scrollbar-track{background:transparent}.strip::-webkit-scrollbar-thumb{background:var(--accent);border-radius:99px}
 .fr{flex:none;text-align:center;font-size:12px;color:var(--mute);cursor:pointer;background:none;border:0;color:inherit}
 .fr span{display:flex;width:52px;height:52px;border-radius:50%;background:var(--them);align-items:center;justify-content:center;font-size:26px;border:3px solid transparent;margin-bottom:2px}
 .fr.on span{border-color:var(--accent)}
@@ -57,15 +57,15 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
 #camT{position:relative;z-index:2;color:#fff;font-size:14px;text-shadow:0 1px 4px #000;margin-bottom:12px}
 #shut{position:relative;z-index:2;width:78px;height:78px;border-radius:50%;border:5px solid #fff;background:rgba(255,255,255,.25);margin-bottom:calc(30px + env(safe-area-inset-bottom,0px));touch-action:none;user-select:none;-webkit-user-select:none;transition:transform .15s,background .15s}
 #shut.recording{background:#e5383b;transform:scale(1.25)}
-.zrow{position:relative;z-index:2;display:flex;gap:10px;align-items:center;color:#fff;width:80%;max-width:320px;margin-bottom:10px;text-shadow:0 1px 4px #000}.zrow input{flex:1}.cbtn.on{background:var(--accent)!important;color:var(--on)}.btn.on{background:#e5383b;color:#fff}.sv{margin-top:6px;border:0;border-radius:99px;padding:6px 12px;background:var(--surface);color:var(--ink);cursor:pointer;font-size:13px}.btn.sel{background:var(--accent);color:var(--on)}.btn:disabled{opacity:.5}.hasbg .empty{background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:12px;opacity:.95}</style>
+.zrow{position:relative;z-index:2;display:flex;gap:10px;align-items:center;color:#fff;width:80%;max-width:320px;margin-bottom:10px;text-shadow:0 1px 4px #000}.zrow input{flex:1}.cbtn.on{background:var(--accent)!important;color:var(--on)}.btn.on{background:#e5383b;color:#fff}.sv{margin-top:6px;border:0;border-radius:99px;padding:6px 12px;background:var(--surface);color:var(--ink);cursor:pointer;font-size:13px}.btn.sel{background:var(--accent);color:var(--on)}.btn:disabled{opacity:.5}.hasbg .empty{background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:12px;opacity:.95}.fr .dot{top:38px;left:50%;margin:0 0 0 14px}.fr .dot.u{top:-4px;margin:0 0 0 8px;width:auto;min-width:18px;height:18px;padding:0 4px;border-radius:99px;background:var(--accent);color:var(--on);font:700 11px/14px system-ui,sans-serif;text-align:center}</style>
 </head>
 <body>
 <div class="app">
   <header><h1 style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 64 64" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="16" fill="#1f1b3d"/><g fill="none" stroke-width="2.4" stroke-linecap="round"><path d="M9 38C14 10 44 6 52 24C58 38 34 58 24 40C18 27 40 18 55 44" stroke="#ff6b6b"/><path d="M12 52C8 24 30 12 40 28C48 42 22 50 20 32C19 22 36 10 54 16" stroke="#2dd4bf"/><path d="M8 22C22 36 30 60 46 50C58 44 56 22 40 22C26 22 22 44 44 56" stroke="#c4b5fd"/></g><g fill="#fff" stroke="#1f1b3d" stroke-width="1.4"><circle cx="9" cy="38" r="3"/><circle cx="55" cy="44" r="3"/><circle cx="12" cy="52" r="3"/><circle cx="54" cy="16" r="3"/><circle cx="8" cy="22" r="3"/><circle cx="44" cy="56" r="3"/></g></svg>Skein</h1><nav class="tools"><button class="tb" id="bAdd" aria-label="Add friend" title="Add friend"><i>➕</i></button><button class="tb" id="bId" aria-label="Copy my ID" title="Copy my ID"><i>👤</i></button><button class="tb" id="bStr" aria-label="Streaks" title="Streaks"><i>🔥</i></button><button class="tb" id="bSet" aria-label="Settings" title="Settings"><i>⚙️</i></button></nav></header>
   <div class="strip" id="strip"></div>
-  <div style="display:flex;align-items:center;border-bottom:1px solid var(--line)"><div class="stat" id="stat" style="flex:1;border-bottom:0"></div><button class="badge" id="bFr" style="border:0;cursor:pointer;margin-right:10px;background:var(--them);color:var(--ink)" aria-label="Friend options">⋯</button></div>
+  <div style="display:flex;align-items:center;border-bottom:1px solid var(--line)"><div class="stat" id="stat" style="flex:1;border-bottom:0"></div><button class="badge" id="bUn" style="display:none;border:0;cursor:pointer;margin-right:6px" aria-label="Jump to unread chat"></button><button class="badge" id="bFr" style="border:0;cursor:pointer;margin-right:10px;background:var(--them);color:var(--ink)" aria-label="Friend options">⋯</button></div>
   <div id="msgs"></div>
-  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.4.2</span></div>
+  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.5.0</span></div>
   <div class="bar">
     <input type="file" id="pic" accept="image/*,video/*" hidden>
     <input type="file" id="bgIn" accept="image/*" hidden>
@@ -195,7 +195,7 @@ const enc=s=>new TextEncoder().encode(s);
 async function signFor(dev){if(!myPriv)return null;return new Uint8Array(await SUB.sign(SIG,myPriv,enc(myId+'>'+dev)))}
 async function verifyFrom(jwk,sig,dev){try{const k=await SUB.importKey('jwk',{kty:jwk.kty,crv:jwk.crv,x:jwk.x,y:jwk.y},ALG,false,['verify']);return await SUB.verify(SIG,k,new Uint8Array(sig),enc(dev+'>'+myId))}catch(e){return false}}
 /* ---------- theme: auto / light / dark ---------- */
-const APP_VERSION='1.4.2';
+const APP_VERSION='1.5.0';
 function getTheme(){try{const t=localStorage.getItem('sk_theme');return t=='light'||t=='dark'?t:'auto'}catch(e){return'auto'}}
 function applyTheme(t){
   if(t=='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);
@@ -209,7 +209,9 @@ const dn=f=>f.nick||f.name;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const EM=['🦊','🐼','🐸','🐙','🦄','🐯','🐨','🐧'];
 const myOff=new Date().getTimezoneOffset();let myPz=[];try{myPz=JSON.parse(localStorage.getItem('sk_pz')||'[]')}catch(e){}
-let friends={},cur=null,conns={},unread=new Set(),urls={},peer=null;
+let autoRead=!!localStorage.getItem('sk_last');
+const unread={n:{},has(id){return !!this.n[id]},delete(id){delete this.n[id]},count(id){return this.n[id]||0}};
+let friends={},cur=null,conns={},urls={},peer=null;
 /* ---------- networking (WebRTC via PeerJS) ---------- */
 let dq=Promise.resolve(),pendingLink=null;
 function startPeer(){
@@ -226,7 +228,7 @@ const sibConns=()=>Object.values(conns).filter(c=>c&&c.open&&c.role=='sib');
 function toSibs(p){sibConns().forEach(c=>{try{c.send(p)}catch(e){}})}
 const frPack=f=>JSON.parse(JSON.stringify(f));
 async function packMsg(m){
-  const p={k:'sm',f:m.f,me:!!m.me,t:m.t,uid:m.uid,once:!!m.once,ts:m.ts,secs:m.secs||0,done:!!m.done};
+  const p={k:'sm',f:m.f,me:!!m.me,t:m.t,uid:m.uid,once:!!m.once,ts:m.ts,secs:m.secs||0,done:!!m.done,read:m.me||m.read!==false};
   if(m.t=='text')p.text=m.text;else if(m.blob){p.mime=m.blob.type;p.data=await m.blob.arrayBuffer()}
   return p;
 }
@@ -289,9 +291,9 @@ async function onData(c,d){
   if(d.k=='m'){
     const ms=await msgsOf(id);
     if(!ms.some(x=>x.uid==d.uid)){
-      const m={f:id,me:false,t:d.t,uid:d.uid,once:d.once,ts:d.ts,secs:d.once&&d.t=='img'?Math.min(30,Math.max(0,+d.secs||0)):0};
+      const m={f:id,me:false,read:false,t:d.t,uid:d.uid,once:d.once,ts:d.ts,secs:d.once&&d.t=='img'?Math.min(30,Math.max(0,+d.secs||0)):0};
       if(d.t=='text')m.text=d.text;else m.blob=new Blob([d.data],{type:d.mime});
-      await putMsg(m);if(id!=cur)unread.add(id);sibForward(m);
+      await putMsg(m);sibForward(m);
     }
     c.send({k:'ack',uid:d.uid});render();
   }
@@ -301,7 +303,7 @@ async function sibSync(c){
   c.send({k:'fr',list:Object.values(friends).map(frPack)});
   c.send({k:'devs',list:myDevs});
   c.send({k:'prof',name:myName,pz:myPz,ts:+localStorage.getItem('sk_pzts')||0});
-  const items=[];for(const f of Object.values(friends))for(const m of await msgsOf(f.id))items.push([f.id,m.uid,m.done?1:0]);
+  const items=[];for(const f of Object.values(friends))for(const m of await msgsOf(f.id))items.push([f.id,m.uid,m.done?1:0,m.me||m.read!==false?1:0]);
   c.send({k:'inv',items});
 }
 async function onSib(c,d){
@@ -311,7 +313,7 @@ async function onSib(c,d){
   if(d.k=='inv'){
     const have=new Map();for(const f of Object.values(friends))for(const m of await msgsOf(f.id))have.set(m.uid,m);
     const need=[];
-    for(const it of d.items||[]){const[f,uid,dn]=it;if(!friends[f])continue;const m=have.get(uid);if(!m)need.push([f,uid]);else if(dn&&!m.done){m.done=true;m.blob=null;await putMsg(m)}}
+    for(const it of d.items||[]){const[f,uid,dn,rd]=it;if(!friends[f])continue;const m=have.get(uid);if(!m)need.push([f,uid]);else{let ch=false;if(dn&&!m.done){m.done=true;m.blob=null;ch=true}if(rd&&!m.me&&m.read===false){m.read=true;ch=true}if(ch)await putMsg(m)}}
     if(need.length)c.send({k:'need',list:need});
     render();return;
   }
@@ -324,9 +326,14 @@ async function onSib(c,d){
     if(!friends[d.f])return;
     const ex=(await msgsOf(d.f)).find(x=>x.uid==d.uid);
     if(ex){if(d.done&&!ex.done){ex.done=true;ex.blob=null;await putMsg(ex);render()}return}
-    const m={f:d.f,me:!!d.me,t:d.t,uid:d.uid,once:!!d.once,ts:d.ts,secs:d.secs||0,pend:false,done:!!d.done};
+    const m={f:d.f,me:!!d.me,t:d.t,uid:d.uid,once:!!d.once,ts:d.ts,secs:d.secs||0,pend:false,done:!!d.done,read:!!d.me||d.read!==false};
     if(d.t=='text')m.text=d.text;else if(d.data)m.blob=new Blob([d.data],{type:d.mime});
-    await putMsg(m);if(!m.me&&!m.done&&d.f!=cur)unread.add(d.f);render();return;
+    await putMsg(m);render();return;
+  }
+  if(d.k=='read'){
+    if(!friends[d.f])return;
+    for(const m of await msgsOf(d.f))if(!m.me&&m.read===false&&m.ts<=d.ts){m.read=true;await putMsg(m)}
+    render();return;
   }
   if(d.k=='done'){
     if(!friends[d.f])return;
@@ -413,6 +420,7 @@ async function transmit(c,m){
   c.send(p);
 }
 async function sendMsg(t,payload,once,secs){
+  autoRead=true;
   if(!cur)return toast('Add a friend first');
   if(payload instanceof Blob&&payload.size>25e6)return toast('That file is over 25 MB');
   const m={f:cur,me:true,t,once:!!once,pend:true,ts:Date.now(),uid:rid(12),secs:(t=='img'&&once&&secs)||0};
@@ -496,6 +504,17 @@ $('foRen').onclick=async()=>{
 };
 $('foBg').onclick=()=>{if(cur)pickBg('bg:'+cur)};$('foBgX').onclick=()=>{if(cur)setBg('bg:'+cur,null)};
 $('stBg').onclick=()=>pickBg('bg:all');$('stBgX').onclick=()=>setBg('bg:all',null);
+/* ---------- unread chip, window title, friend-row scrolling ---------- */
+function unreadOthers(){return Object.keys(unread.n).filter(i=>friends[i]&&i!=cur&&unread.count(i)>0)}
+function refreshUnread(){
+  const ids=unreadOthers(),tot=ids.reduce((a,i)=>a+unread.count(i),0);
+  $('bUn').style.display=ids.length?'':'none';$('bUn').textContent='💬 '+(tot>99?'99+':tot)+' new';
+  document.title=(tot?'('+(tot>99?'99+':tot)+') ':'')+'Skein';
+  try{const on=$('strip').querySelector('.on');if(on&&on.scrollIntoView)on.scrollIntoView({block:'nearest',inline:'nearest'})}catch(e){}
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)render()});
+$('bUn').onclick=()=>{const ids=unreadOthers();if(!ids.length)return;cur=ids[0];autoRead=true;render()};
+$('strip').addEventListener('wheel',e=>{const s=$('strip');if(s.scrollWidth<=s.clientWidth||Math.abs(e.deltaY)<=Math.abs(e.deltaX))return;s.scrollLeft+=e.deltaY;e.preventDefault()},{passive:false});
 /* ---------- streaks ---------- */
 let info={};
 const sharedOff=f=>myAcct<f.id?myOff:(f.tz!=null?f.tz:myOff);
@@ -546,12 +565,16 @@ $('smPause').onclick=()=>{
 };
 /* ---------- UI ---------- */
 function urlFor(m){if(!m.blob)return'';return urls[m.id]||(urls[m.id]=URL.createObjectURL(m.blob))}
-async function render(){const _i={};await Promise.all(Object.values(friends).map(async f=>{_i[f.id]=streak(f,await msgsOf(f.id))}));info=_i;$('bFr').style.display=friends[cur]?'':'none';applyBg();
+async function markRead(fid,ms){
+  let wm=0;for(const m of ms)if(!m.me&&m.read===false){m.read=true;wm=Math.max(wm,m.ts);await putMsg(m)}
+  if(wm)toSibs({k:'read',f:fid,ts:wm});
+}
+async function render(){const _i={},_u={};await Promise.all(Object.values(friends).map(async f=>{const ms=await msgsOf(f.id);if(f.id==cur&&!document.hidden&&autoRead)await markRead(f.id,ms);_i[f.id]=streak(f,ms);const n=ms.filter(m=>!m.me&&m.read===false).length;if(n)_u[f.id]=n}));info=_i;unread.n=_u;if(cur&&autoRead){try{localStorage.setItem('sk_last',cur)}catch(e){}}$('bFr').style.display=friends[cur]?'':'none';applyBg();refreshUnread();
   $('strip').innerHTML='';
   Object.values(friends).forEach(f=>{
     const b=document.createElement('button');b.className='fr'+(f.id==cur?' on':'');
-    b.innerHTML=(online(f)?'<i class="dot"></i>':'')+(unread.has(f.id)?'<i class="dot u"></i>':'')+'<span>'+f.e+'</span>';
-    b.append(dn(f));const _s=info[f.id];if(_s&&_s.n>0){const sm=document.createElement('small');sm.textContent='🔥'+_s.n+(_s.paused?'⏸':_s.risk?'⏳':'');b.append(document.createElement('br'),sm)}b.onclick=()=>{cur=f.id;unread.delete(f.id);render()};$('strip').appendChild(b)});
+    b.innerHTML=(online(f)?'<i class="dot"></i>':'')+(unread.has(f.id)?'<i class="dot u">'+(unread.count(f.id)>99?'99+':unread.count(f.id))+'</i>':'')+'<span>'+f.e+'</span>';
+    b.append(dn(f));const _s=info[f.id];if(_s&&_s.n>0){const sm=document.createElement('small');sm.textContent='🔥'+_s.n+(_s.paused?'⏸':_s.risk?'⏳':'');b.append(document.createElement('br'),sm)}b.onclick=()=>{cur=f.id;autoRead=true;render()};$('strip').appendChild(b)});
   const box=$('msgs'),f=friends[cur];
   if(!f){$('stat').textContent='Your ID: '+shareCode();box.innerHTML='<div class="empty">No friends yet.<br>Tap “My ID” to share yours, or “+ Friend” to add theirs.<br>Everything stays on your device.</div>';return}
   $('stat').textContent=statText(f);
@@ -677,7 +700,7 @@ let arec=null,ach=[],as=null;
 $('bMic').onclick=async()=>{if(arec&&arec.state=='recording'){arec.stop();return}try{as=await navigator.mediaDevices.getUserMedia({audio:true});ach=[];arec=new MediaRecorder(as,mimeOpt('audio'));arec.ondataavailable=e=>ach.push(e.data);arec.onstop=()=>{as.getTracks().forEach(t=>t.stop());$('bMic').classList.remove('rec');$('bMic').textContent='🎤';sendMsg('audio',new Blob(ach,{type:arec.mimeType}))};arec.start();$('bMic').classList.add('rec');$('bMic').textContent='⏹';toast('Recording… tap again to send')}catch(e){toast('Microphone access was blocked')}};
 /* ---------- boot ---------- */
 (async()=>{
-  const fs=await tx('friends','readonly',s=>s.getAll());fs.forEach(f=>friends[f.id]=f);cur=fs[0]&&fs[0].id;
+  const fs=await tx('friends','readonly',s=>s.getAll());fs.forEach(f=>friends[f.id]=f);{const last=localStorage.getItem('sk_last');cur=fs.some(f=>f.id==last)?last:fs[0]&&fs[0].id}
   await render();
   if(!localStorage.getItem('sk_name')){const n=await askText('Welcome! Pick a display name for your friends to see');myName=(n||'Me').slice(0,20);localStorage.setItem('sk_name',myName)}
   if(typeof Peer=='undefined'){toast('Couldn’t load the connection library. Check your internet.');return}
