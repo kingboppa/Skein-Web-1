@@ -66,7 +66,7 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
   <div class="strip" id="strip"></div>
   <div style="display:flex;align-items:center;border-bottom:1px solid var(--line)"><div class="stat" id="stat" style="flex:1;border-bottom:0"></div><button class="badge" id="bUn" style="display:none;border:0;cursor:pointer;margin-right:6px" aria-label="Jump to unread chat"></button><button class="badge" id="bFr" style="border:0;cursor:pointer;margin-right:10px;background:var(--them);color:var(--ink)" aria-label="Friend options">⋯</button></div>
   <div id="msgs"></div>
-  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.6.0</span></div>
+  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.7.0</span></div>
   <div class="bar">
     <input type="file" id="pic" accept="image/*,video/*" hidden>
     <input type="file" id="bgIn" accept="image/*" hidden>
@@ -122,6 +122,11 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
   </div>
   <button class="btn g" id="lkUse">Use an account from another device</button>
   <div style="font-size:12px;color:var(--mute)">Linked devices share your friends, chats and streaks while they are online together. Anyone who holds a linked device can read your chats, so keep your devices locked.</div>
+  <hr style="width:100%;border:0;border-top:1px solid var(--line)">
+  <div style="font-size:14px;font-weight:600">Offline mailbox</div>
+  <div id="mbSt" style="font-size:13px"></div>
+  <div class="row" style="max-width:none"><button class="btn" id="mbSet" style="flex:1">Set mailbox link</button><button class="btn g" id="mbRm" style="display:none">Remove</button></div>
+  <div style="font-size:12px;color:var(--mute)">Lets messages reach you, and your other devices, while you are offline. They wait locked in a mailbox and are deleted once collected. Everyone chatting needs the same link.</div>
   <hr style="width:100%;border:0;border-top:1px solid var(--line)">
   <div style="font-size:14px;font-weight:600">Chat background (all chats)</div>
   <div class="row" style="max-width:none"><button class="btn g" id="stBg" style="flex:1">🖼 Choose image</button><button class="btn g" id="stBgX">Remove</button></div>
@@ -203,7 +208,7 @@ const enc=s=>new TextEncoder().encode(s);
 async function signFor(dev){if(!myPriv)return null;return new Uint8Array(await SUB.sign(SIG,myPriv,enc(myId+'>'+dev)))}
 async function verifyFrom(jwk,sig,dev){try{const k=await SUB.importKey('jwk',{kty:jwk.kty,crv:jwk.crv,x:jwk.x,y:jwk.y},ALG,false,['verify']);return await SUB.verify(SIG,k,new Uint8Array(sig),enc(dev+'>'+myId))}catch(e){return false}}
 /* ---------- theme: auto / light / dark ---------- */
-const APP_VERSION='1.6.0';
+const APP_VERSION='1.7.0';
 function getTheme(){try{const t=localStorage.getItem('sk_theme');return t=='light'||t=='dark'?t:'auto'}catch(e){return'auto'}}
 function applyTheme(t){
   if(t=='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);
@@ -242,7 +247,7 @@ async function packMsg(m){
 }
 async function sibForward(m){if(sibConns().length)toSibs(await packMsg(m))}
 async function sendHi(c){
-  const p={k:'hi',name:myName,tz:myOff,acct:myAcct,devs:myDevs};
+  const p={k:'hi',name:myName,tz:myOff,acct:myAcct,devs:myDevs};if(mbUrl)p.mb=mbUrl;
   if(myPubJwk){const s=await signFor(c.peer);if(s){p.pub=myPubJwk;p.sig=s}}
   c.send(p);
 }
@@ -280,6 +285,7 @@ async function onHi(c,d){
   if(d.name&&f.name!=d.name){f.name=String(d.name).slice(0,30);ch=true}
   if(d.tz!=null&&f.tz!==d.tz){f.tz=d.tz;ch=true}
   if(ch)await putFriend(f);
+  if(d.mb&&!mbUrl&&MB_RE.test(d.mb)&&f.mbAsked!==d.mb){f.mbAsked=d.mb;await putFriend(f);if(confirm(dn(f)+' uses an offline mailbox, so you can message each other even when one of you is offline. Use the same one? It only ever holds locked messages.'))setMailbox(d.mb)}
   const first=c.role!='friend';c.role='friend';c.acct=acct;
   if(first){c.send({k:'pz',r:myPz});if(f.base)c.send({k:'base',n:f.base.n,ts:f.base.ts});flush(acct)}
   render();
@@ -306,10 +312,149 @@ async function onData(c,d){
     c.send({k:'ack',uid:d.uid});render();
   }
 }
+/* ---------- offline mailbox: encrypted messages held in the owner's Google Drive ---------- */
+const MB_RE=/^https:\/\/script\.google\.com\/(?:a\/macros\/[\w.-]+\/|macros\/)s\/[\w-]+\/exec$/,MB_MAX=7e6,KEEP_MS=14*864e5,MB_DEFAULT='https://script.google.com/macros/s/AKfycbwZDgobR1tqR1tSqXTWuXu8LC9zCUMhNpokqjyvZG0w-MXz9LSzXGjOqrCyxjj5DbiC/exec';
+/* the built-in mailbox is used until someone sets or removes one (removing stores an empty link, which stays off) */
+let mbUrl=(v=>v===null?MB_DEFAULT:v)(localStorage.getItem('sk_mb')),mbTs=+localStorage.getItem('sk_mbts')||0,mbStat={t:0,ok:null,msg:''},mbBusy=false,mbOutBusy=false,mbAgain=false,mbBigTold=false;
+const mbSkip=new Set();
+const inQ=fn=>{const p=dq.then(fn);dq=p.catch(()=>{});return p};
+const b64=u=>{let s='';for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s)};
+const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+const ECDH={name:'ECDH',namedCurve:'P-256'};
+async function mbTok(){const k=JSON.parse(localStorage.getItem('sk_key')||'null');if(!k||!k.priv||!k.priv.d)return null;return b64(new Uint8Array(await SUB.digest('SHA-256',enc('skein-mb-v1|'+myId+'|'+k.priv.d)))).replace(/=+$/,'')}
+async function mbCall(o){
+  if(!mbUrl)throw new Error('no mailbox set');
+  const ac=new AbortController(),to=setTimeout(()=>ac.abort(),60000);
+  try{const r=await fetch(mbUrl,{method:'POST',body:JSON.stringify(o),redirect:'follow',signal:ac.signal});return await r.json()}finally{clearTimeout(to)}
+}
+const cat=(...a)=>{const o=new Uint8Array(a.reduce((n,x)=>n+x.length,0));let p=0;a.forEach(x=>{o.set(x,p);p+=x.length});return o};
+/* locked with the recipient's public key, signed with mine; the mailbox only ever sees scrambled bytes */
+async function mbSeal(toAcct,hdr,data){
+  const pub=toAcct==myAcct?pubStr(myPubJwk):(friends[toAcct]&&friends[toAcct].pub);
+  if(!pub||!myPriv||!myPubJwk)return null;
+  if(data&&data.length*1.4>MB_MAX)return'big';
+  const h=enc(JSON.stringify(hdr)),len=new Uint8Array(4);new DataView(len.buffer).setUint32(0,h.length);
+  const body=cat(len,h,data||new Uint8Array(0)),sig=new Uint8Array(await SUB.sign(SIG,myPriv,cat(enc('mb1|'+toAcct+'|'),body)));
+  const[x,y]=pub.split('.'),rk=await SUB.importKey('jwk',{kty:'EC',crv:'P-256',x,y},ECDH,false,[]);
+  const eph=await SUB.generateKey(ECDH,true,['deriveKey']),key=await SUB.deriveKey({name:'ECDH',public:rk},eph.privateKey,{name:'AES-GCM',length:256},false,['encrypt']);
+  const iv=crypto.getRandomValues(new Uint8Array(12)),ct=new Uint8Array(await SUB.encrypt({name:'AES-GCM',iv},key,cat(sig,body))),ep=await SUB.exportKey('jwk',eph.publicKey);
+  const out=JSON.stringify({v:1,x:ep.x,y:ep.y,iv:b64(iv),c:b64(ct)});
+  return out.length>MB_MAX?'big':out;
+}
+async function mbOpen(text){
+  const e=JSON.parse(text),k=JSON.parse(localStorage.getItem('sk_key')||'null');
+  if(!e||e.v!==1||!k||!myPubJwk)return null;
+  const priv=await SUB.importKey('jwk',{kty:'EC',crv:'P-256',x:k.pub.x,y:k.pub.y,d:k.priv.d},ECDH,false,['deriveKey']);
+  const pk=await SUB.importKey('jwk',{kty:'EC',crv:'P-256',x:e.x,y:e.y},ECDH,false,[]);
+  const key=await SUB.deriveKey({name:'ECDH',public:pk},priv,{name:'AES-GCM',length:256},false,['decrypt']);
+  const plain=new Uint8Array(await SUB.decrypt({name:'AES-GCM',iv:unb64(e.iv)},key,unb64(e.c)));
+  if(plain.length<68)return null;
+  const sig=plain.slice(0,64),body=plain.slice(64),hl=new DataView(body.buffer).getUint32(0);
+  if(hl>body.length-4)return null;
+  const hdr=JSON.parse(new TextDecoder().decode(body.subarray(4,4+hl)));
+  if(!hdr||hdr.to!==myAcct)return null;
+  const pub=hdr.from==myAcct?pubStr(myPubJwk):(friends[hdr.from]&&friends[hdr.from].pub);if(!pub)return null;
+  const[x,y]=pub.split('.'),vk=await SUB.importKey('jwk',{kty:'EC',crv:'P-256',x,y},ALG,false,['verify']);
+  if(!await SUB.verify(SIG,vk,sig,cat(enc('mb1|'+myAcct+'|'),body)))return null;
+  return{hdr,data:body.slice(4+hl)};
+}
+const okMsg=h=>h&&typeof h.uid=='string'&&/^[\w-]{6,40}$/.test(h.uid)&&typeof h.t=='string'&&/^[a-z]{2,12}$/.test(h.t)&&typeof h.ts=='number';
+async function mbHandle(text){
+  let o=null;try{o=await mbOpen(text)}catch(e){return'bad'}
+  if(!o)return'bad';
+  const h=o.hdr;
+  if(h.kind=='ack'){
+    const f=friends[h.from];if(!f||typeof h.uid!='string')return'bad';
+    const m=(await msgsOf(f.id)).find(x=>x.uid==h.uid&&x.me);if(m&&m.pend){m.pend=false;await putMsg(m);render()}return'ok';
+  }
+  if(h.kind=='m'){
+    const f=friends[h.from];if(!f||h.from==myAcct||!okMsg(h))return'bad';
+    const dup=(await msgsOf(f.id)).some(x=>x.uid==h.uid);
+    if(!dup){
+      const m={f:f.id,me:false,read:false,t:h.t,uid:h.uid,once:!!h.once,ts:h.ts,secs:h.once&&h.t=='img'?Math.min(30,Math.max(0,+h.secs||0)):0};
+      if(h.t=='text')m.text=String(h.text||'').slice(0,20000);else m.blob=new Blob([o.data],{type:String(h.mime||'').slice(0,60)});
+      await putMsg(m);sibForward(m);
+    }
+    render();
+    if(!dup)mbDeposit(f.id,f.devs||[f.id],{kind:'ack',uid:h.uid},null).catch(()=>{});
+    return'ok';
+  }
+  if(h.kind=='sm'&&h.from==myAcct&&okMsg(h)&&friends[h.f]){
+    await onSib(null,{k:'sm',f:h.f,me:true,t:h.t,uid:h.uid,once:!!h.once,ts:h.ts,secs:h.secs||0,done:false,read:true,text:h.t=='text'?String(h.text||''):undefined,mime:h.mime,data:h.t=='text'?undefined:o.data.buffer});
+    return'ok';
+  }
+  return'bad';
+}
+/* drop an encrypted copy into the mailbox for each of the recipient's devices that has opened its mailbox */
+async function mbDeposit(toAcct,devs,hdr,data){
+  hdr.from=myAcct;hdr.to=toAcct;
+  const h=await mbCall({a:'has',devs});if(!h||!h.ok)return null;
+  const to=devs.filter(d=>(h.have||[]).includes(d));
+  if(!to.length)return devs.slice();
+  const body=await mbSeal(toAcct,hdr,data);if(!body)return null;if(body==='big')return'big';
+  const r=await mbCall({a:'put',id:rid(14),to,body});
+  if(!r||!r.ok)return r&&r.err=='bad message'?'big':null;
+  return devs.filter(d=>!to.includes(d)||(r.miss||[]).includes(d));
+}
+async function mbPull(){
+  if(!mbUrl||mbBusy||!myPriv)return;mbBusy=true;
+  try{
+    const tok=await mbTok(),r=await mbCall({a:'list',dev:myId,tok});
+    if(!r||!r.ok)throw new Error(r&&r.err||'no answer');
+    for(const it of r.items||[]){
+      if(mbSkip.has(it.id))continue;
+      const g=await mbCall({a:'get',dev:myId,tok,id:it.id});
+      if(!g||!g.ok){if(g&&g.err=='gone')continue;throw new Error(g&&g.err||'no answer')}
+      let res='bad';try{res=await inQ(()=>mbHandle(g.body))}catch(e){console.error('skein mailbox',e)}
+      await mbCall({a:'del',dev:myId,tok,id:it.id});
+    }
+    mbStat={t:Date.now(),ok:true,msg:''};
+    if(r.more)setTimeout(mbPull,300);
+  }catch(e){mbStat={t:Date.now(),ok:false,msg:e&&e.name=='AbortError'?'took too long':String(e&&e.message||e).slice(0,80)}}
+  finally{mbBusy=false;renderSettings()}
+}
+const mbMark=(fid,uid,patch)=>inQ(async()=>{const m=(await msgsOf(fid)).find(x=>x.uid==uid);if(m){Object.assign(m,patch);await putMsg(m)}});
+async function mbOutbox(){
+  if(!mbUrl||!myPriv)return;if(mbOutBusy){mbAgain=true;return}mbOutBusy=true;mbAgain=false;
+  try{
+    const now=Date.now();
+    for(const f of Object.values(friends)){
+      for(const m of await msgsOf(f.id)){
+        if(!m.me||now-m.ts>KEEP_MS||m.mbBig||(m.t!='text'&&!m.blob))continue;
+        const due=(n,at,miss)=>n<5&&(!at||now-at>(miss&&miss.length?3e5:2e4));
+        if(f.pub&&m.pend&&(!m.mbMiss||m.mbMiss.length)&&due(m.mbN||0,m.mbAt,m.mbMiss)&&(!friendConns(f.id).length||now-m.ts>6e4)){
+          const hdr={kind:'m',uid:m.uid,t:m.t,once:!!m.once,ts:m.ts,secs:m.secs||0},data=m.t=='text'?null:new Uint8Array(await m.blob.arrayBuffer());
+          if(m.t=='text')hdr.text=m.text;else hdr.mime=m.blob.type;
+          let res=null;try{res=await mbDeposit(f.id,m.mbMiss||f.devs||[f.id],hdr,data)}catch(e){}
+          if(res==='big'){await mbMark(f.id,m.uid,{mbBig:true});if(!mbBigTold){mbBigTold=true;toast('That one is too big for the mailbox, so it will only arrive when '+dn(f)+' is online.')}}
+          else if(res)await mbMark(f.id,m.uid,{mbMiss:res,mbAt:Date.now(),mbN:res.length?(m.mbN||0):0});
+          else await mbMark(f.id,m.uid,{mbN:(m.mbN||0)+1,mbAt:Date.now()});
+        }
+        if(m.mbSibTo&&m.mbSibTo.length&&due(m.mbSN||0,m.mbSAt,m.mbSibTo)){
+          const hdr={kind:'sm',f:f.id,uid:m.uid,t:m.t,once:!!m.once,ts:m.ts,secs:m.secs||0},data=m.t=='text'?null:new Uint8Array(await m.blob.arrayBuffer());
+          if(m.t=='text')hdr.text=m.text;else hdr.mime=m.blob.type;
+          let res=null;try{res=await mbDeposit(myAcct,m.mbSibTo,hdr,data)}catch(e){}
+          if(res==='big')await mbMark(f.id,m.uid,{mbSibTo:[]});
+          else if(res)await mbMark(f.id,m.uid,{mbSibTo:res,mbSAt:Date.now(),mbSN:res.length?(m.mbSN||0):0});
+          else await mbMark(f.id,m.uid,{mbSN:(m.mbSN||0)+1,mbSAt:Date.now()});
+        }
+      }
+    }
+  }catch(e){console.error('skein mailbox',e)}finally{mbOutBusy=false;if(mbAgain)setTimeout(mbOutbox,200)}
+}
+function setMailbox(url,ts,quiet){
+  mbUrl=url||'';mbTs=ts||Date.now();
+  try{localStorage.setItem('sk_mb',mbUrl);localStorage.setItem('sk_mbts',mbTs)}catch(e){}
+  mbSkip.clear();mbStat={t:0,ok:null,msg:''};
+  if(!quiet)toSibs({k:'mb',url:mbUrl,ts:mbTs});
+  friendsRehi();renderSettings();
+  if(mbUrl){mbPull();mbOutbox()}
+}
 /* ---------- syncing between my own linked devices ---------- */
 async function sibSync(c){
   c.send({k:'fr',list:Object.values(friends).map(frPack)});
   c.send({k:'devs',list:myDevs});
+  if(mbTs)c.send({k:'mb',url:mbUrl,ts:mbTs});
   c.send({k:'prof',name:myName,pz:myPz,ts:+localStorage.getItem('sk_pzts')||0});
   const items=[];for(const f of Object.values(friends))for(const m of await msgsOf(f.id))items.push([f.id,m.uid,m.done?1:0,m.me||m.read!==false?1:0]);
   c.send({k:'inv',items});
@@ -318,6 +463,7 @@ async function onSib(c,d){
   if(d.k=='fr')return mergeFriends(d.list);
   if(d.k=='devs')return mergeDevs(d.list);
   if(d.k=='prof')return adoptProf(d);
+  if(d.k=='mb'){if(+d.ts>mbTs&&typeof d.url=='string'&&(d.url===''||MB_RE.test(d.url)))setMailbox(d.url,+d.ts,true);return}
   if(d.k=='inv'){
     const have=new Map();for(const f of Object.values(friends))for(const m of await msgsOf(f.id))have.set(m.uid,m);
     const need=[];
@@ -433,9 +579,11 @@ async function sendMsg(t,payload,once,secs){
   if(payload instanceof Blob&&payload.size>25e6)return toast('That file is over 25 MB');
   const m={f:cur,me:true,t,once:!!once,pend:true,ts:Date.now(),uid:rid(12),secs:(t=='img'&&once&&secs)||0};
   if(t=='text')m.text=payload;else m.blob=payload;
+  if(mbUrl)m.mbSibTo=myDevs.map(d=>d.id).filter(i=>i!=myId&&!(conns[i]&&conns[i].open&&conns[i].role=='sib'));
   await putMsg(m);render();
   friendConns(cur).forEach(c=>transmit(c,m));
   sibForward(Object.assign({},m,{pend:false}));
+  if(mbUrl)mbOutbox();
 }
 async function addFriend(id,name,n0,hint,nick){
   const f={id,name:name||id,e:EM[[...id].reduce((a,c)=>a+c.charCodeAt(0),0)%EM.length],devs:[...new Set([id,...(hint||[])])],nick:nick||'',nickTs:nick?Date.now():0};
@@ -465,6 +613,8 @@ function renderSettings(){
   const box=$('stDevs');box.innerHTML='';
   myDevs.forEach(d=>{const r=document.createElement('div');r.style.padding='3px 0';const on=d.id==myId||(conns[d.id]&&conns[d.id].open&&conns[d.id].role=='sib');r.textContent=(on?'🟢 ':'⚪ ')+d.l+(d.id==myId?' (this device)':'');box.appendChild(r)});
   $('lkNew').disabled=!myPriv;
+  $('mbSt').textContent=!mbUrl?'Off. Messages only arrive while you are both online.':mbStat.ok===false?'Problem: '+mbStat.msg:mbStat.t?'On. Last checked '+new Date(mbStat.t).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'On. Checking…';
+  $('mbRm').style.display=mbUrl?'':'none';$('mbSet').textContent=mbUrl?'Change link':'Set mailbox link';
   if(pendingLink&&Date.now()>pendingLink.exp)pendingLink=null;
   $('lkBox').style.display=pendingLink?'flex':'none';
 }
@@ -511,6 +661,13 @@ $('bSet').onclick=()=>{$('st').classList.add('show');renderSettings();renderUp()
 $('stX').onclick=()=>$('st').classList.remove('show');
 $('thA').onclick=()=>setTheme('auto');$('thL').onclick=()=>setTheme('light');$('thD').onclick=()=>setTheme('dark');
 $('stRen').onclick=async()=>{const n=await askText('Your display name',myName);if(!n)return;myName=n.slice(0,20);localStorage.setItem('sk_name',myName);profChanged();friendsRehi();renderSettings()};
+$('mbSet').onclick=async()=>{
+  const v=await askText('Paste your mailbox link (it starts with https://script.google.com/)',mbUrl);if(v===null)return;
+  const u=v.trim();if(!MB_RE.test(u))return toast('That doesn’t look like a mailbox link');
+  setMailbox(u);
+  try{const r=await mbCall({a:'ping'});toast(r&&r.ok?'Mailbox connected':'That link didn’t answer like a Skein mailbox')}catch(e){toast('Couldn’t reach that link. Check it and your internet.')}
+};
+$('mbRm').onclick=()=>{if(confirm('Turn off the offline mailbox on all your devices?'))setMailbox('')};
 $('lkNew').onclick=()=>{pendingLink={s:rid(8),exp:Date.now()+6e5,tries:0};$('lkCode').value=myId+'~'+pendingLink.s;renderSettings()};
 $('lkCopy').onclick=async()=>{if(await copyText($('lkCode').value))toast('Link code copied');else{$('lkCode').select()}};
 $('lkUse').onclick=()=>startLink();
@@ -754,12 +911,13 @@ $('bMic').onclick=async()=>{if(arec&&arec.state=='recording'){arec.stop();return
   if(typeof Peer=='undefined'){toast('Couldn’t load the connection library. Check your internet.');return}
   await initKeys();
   startPeer();
+  mbPull();
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
   if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!navigator.standalone&&!matchMedia('(display-mode: standalone)').matches)$('ios').style.display='flex';
-  document.addEventListener('visibilitychange',()=>{if(document.hidden||!peer)return;if(peer.destroyed)startPeer();else if(peer.disconnected)peer.reconnect();connectAll()});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden||!peer)return;if(peer.destroyed)startPeer();else if(peer.disconnected)peer.reconnect();connectAll();mbPull();mbOutbox()});
   if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
   const h=location.hash.match(/add=([\w-]+)/);if(h&&!friends[h[1]]&&h[1]!=myId){const n=await askText('Add this friend. What should we call them?');if(n)addFriend(h[1],n)}
-  setInterval(()=>connectAll(),10000);setInterval(render,60000);
+  setInterval(()=>connectAll(),10000);setInterval(render,60000);let mbTick=0;setInterval(()=>{mbOutbox();if(++mbTick%3==0)mbPull()},20000);
   peer.on('open',()=>connectAll());
 })();
 </script>
