@@ -58,7 +58,7 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
 #camT{position:relative;z-index:2;color:#fff;font-size:14px;text-shadow:0 1px 4px #000;margin-bottom:12px}
 #shut{position:relative;z-index:2;width:78px;height:78px;border-radius:50%;border:5px solid #fff;background:rgba(255,255,255,.25);margin-bottom:calc(30px + env(safe-area-inset-bottom,0px));touch-action:none;user-select:none;-webkit-user-select:none;transition:transform .15s,background .15s}
 #shut.recording{background:#e5383b;transform:scale(1.25)}
-.zrow{position:relative;z-index:2;display:flex;gap:10px;align-items:center;color:#fff;width:80%;max-width:320px;margin-bottom:10px;text-shadow:0 1px 4px #000}.zrow input{flex:1}.cbtn.on{background:var(--accent)!important;color:var(--on)}.btn.on{background:#e5383b;color:#fff}.sv{margin-top:6px;border:0;border-radius:99px;padding:6px 12px;background:var(--surface);color:var(--ink);cursor:pointer;font-size:13px}.btn.sel{background:var(--accent);color:var(--on)}.btn:disabled{opacity:.5}.hasbg .empty{background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:12px;opacity:.95}.fr .dot{top:38px;left:50%;margin:0 0 0 14px}.fr .dot.u{top:-4px;margin:0 0 0 8px;width:auto;min-width:18px;height:18px;padding:0 4px;border-radius:99px;background:var(--accent);color:var(--on);font:700 11px/14px system-ui,sans-serif;text-align:center}.tb.upd{position:relative}.tb.upd::after{content:"";position:absolute;top:5px;right:5px;width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid var(--accent);box-sizing:content-box}#st,#fo,#sm,#ask{overscroll-behavior:contain;touch-action:none}#st>div,#fo>div,#sm>div,#ask>div{overscroll-behavior:contain;touch-action:pan-y}</style>
+.zrow{position:relative;z-index:2;display:flex;gap:10px;align-items:center;color:#fff;width:80%;max-width:320px;margin-bottom:10px;text-shadow:0 1px 4px #000}.zrow input{flex:1}.cbtn.on{background:var(--accent)!important;color:var(--on)}.btn.on{background:#e5383b;color:#fff}.sv{margin-top:6px;border:0;border-radius:99px;padding:6px 12px;background:var(--surface);color:var(--ink);cursor:pointer;font-size:13px}.btn.sel{background:var(--accent);color:var(--on)}.btn:disabled{opacity:.5}.hasbg .empty{background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:12px;opacity:.95}.fr .dot{top:38px;left:50%;margin:0 0 0 14px}.fr .dot.u{top:-4px;margin:0 0 0 8px;width:auto;min-width:18px;height:18px;padding:0 4px;border-radius:99px;background:var(--accent);color:var(--on);font:700 11px/14px system-ui,sans-serif;text-align:center}.tb.upd{position:relative}.tb.upd::after{content:"";position:absolute;top:5px;right:5px;width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid var(--accent);box-sizing:content-box}#st,#fo,#sm,#ask,#perm{overscroll-behavior:contain;touch-action:none}#st>div,#fo>div,#sm>div,#ask>div,#perm>div{overscroll-behavior:contain;touch-action:pan-y}</style>
 </head>
 <body>
 <div class="app">
@@ -66,7 +66,7 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
   <div class="strip" id="strip"></div>
   <div style="display:flex;align-items:center;border-bottom:1px solid var(--line)"><div class="stat" id="stat" style="flex:1;border-bottom:0"></div><button class="badge" id="bUn" style="display:none;border:0;cursor:pointer;margin-right:6px" aria-label="Jump to unread chat"></button><button class="badge" id="bFr" style="border:0;cursor:pointer;margin-right:10px;background:var(--them);color:var(--ink)" aria-label="Friend options">⋯</button></div>
   <div id="msgs"></div>
-  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.7.3</span></div>
+  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.7.4</span></div>
   <div class="bar">
     <input type="file" id="pic" accept="image/*,video/*" hidden>
     <input type="file" id="bgIn" accept="image/*" hidden>
@@ -123,6 +123,11 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
   <button class="btn g" id="lkUse">Use an account from another device</button>
   <div style="font-size:12px;color:var(--mute)">Linked devices share your friends, chats and streaks while they are online together. Anyone who holds a linked device can read your chats, so keep your devices locked.</div>
   <hr style="width:100%;border:0;border-top:1px solid var(--line)">
+  <div style="font-size:14px;font-weight:600">Camera &amp; microphone</div>
+  <div id="pmSt" style="font-size:13px"></div>
+  <button class="btn" id="pmGo">Allow camera &amp; microphone</button>
+  <div id="pmHelp" style="font-size:12px;color:var(--mute)"></div>
+  <hr style="width:100%;border:0;border-top:1px solid var(--line)">
   <div style="font-size:14px;font-weight:600">Share Skein</div>
   <div class="row" style="max-width:none"><button class="btn" id="shApp" style="flex:1">Share app link</button><button class="btn g" id="shInv" style="flex:1">Invite with my ID</button></div>
   <div style="font-size:12px;color:var(--mute)">“Invite” sends the link plus yours, so they can add you in one tap. On iPhone they should open it in Safari, tap Share, “Add to Home Screen”, then add you from inside the app with your ID.</div>
@@ -154,6 +159,13 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
   <div class="row" style="max-width:none"><button class="btn g" id="foBg" style="flex:1">🖼 Choose image</button><button class="btn g" id="foBgX">Remove</button></div>
   <div style="font-size:12px;color:var(--mute)">Only for this chat, and only on this device. Without one, this chat uses the background you set for all chats in Settings.</div>
   <button class="btn g" id="foX">Close</button>
+</div></div>
+<div class="modal" id="perm"><div style="background:var(--surface);color:var(--ink);padding:18px;border-radius:16px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:10px">
+  <h3 style="margin:0">📷 Camera &amp; microphone</h3>
+  <div style="font-size:14px">Skein uses your camera for photos and video messages, and your microphone for voice notes and video sound. Nothing leaves your device except what you choose to send. You can change this any time in Settings.</div>
+  <div id="pmRes" style="font-size:14px;font-weight:600"></div>
+  <div id="pmHow" style="font-size:12px;color:var(--mute)"></div>
+  <button class="btn" id="pmOk">Allow</button><button class="btn g" id="pmNo">Not now</button>
 </div></div>
 <div class="modal" id="ask"><div style="background:var(--surface);color:var(--ink);padding:18px;border-radius:16px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:12px">
   <div id="askT" style="font-size:15px"></div>
@@ -212,7 +224,7 @@ const enc=s=>new TextEncoder().encode(s);
 async function signFor(dev){if(!myPriv)return null;return new Uint8Array(await SUB.sign(SIG,myPriv,enc(myId+'>'+dev)))}
 async function verifyFrom(jwk,sig,dev){try{const k=await SUB.importKey('jwk',{kty:jwk.kty,crv:jwk.crv,x:jwk.x,y:jwk.y},ALG,false,['verify']);return await SUB.verify(SIG,k,new Uint8Array(sig),enc(dev+'>'+myId))}catch(e){return false}}
 /* ---------- theme: auto / light / dark ---------- */
-const APP_VERSION='1.7.3';
+const APP_VERSION='1.7.4';
 function getTheme(){try{const t=localStorage.getItem('sk_theme');return t=='light'||t=='dark'?t:'auto'}catch(e){return'auto'}}
 function applyTheme(t){
   if(t=='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);
@@ -617,6 +629,7 @@ function renderSettings(){
   const box=$('stDevs');box.innerHTML='';
   myDevs.forEach(d=>{const r=document.createElement('div');r.style.padding='3px 0';const on=d.id==myId||(conns[d.id]&&conns[d.id].open&&conns[d.id].role=='sib');r.textContent=(on?'🟢 ':'⚪ ')+d.l+(d.id==myId?' (this device)':'');box.appendChild(r)});
   $('lkNew').disabled=!myPriv;
+  refreshPerm();
   $('mbSt').textContent=!mbUrl?'Off. Messages only arrive while you are both online.':mbStat.ok===false?'Problem: '+mbStat.msg:mbStat.t?'On. Last checked '+new Date(mbStat.t).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'On. Checking…';
   $('mbRm').style.display=mbUrl?'':'none';$('mbSet').textContent=mbUrl?'Change link':'Set mailbox link';
   if(pendingLink&&Date.now()>pendingLink.exp)pendingLink=null;
@@ -858,7 +871,7 @@ let cs=null,face='user',crec=null,cch=[],holdT=null,recT=null,recStart=0,pvBlob=
 async function startCam(){
   stopCam();
   try{cs=await navigator.mediaDevices.getUserMedia({video:{facingMode:face,width:{ideal:1280},height:{ideal:720}},audio:true})}
-  catch(e){try{cs=await navigator.mediaDevices.getUserMedia({video:{facingMode:face}});toast('No microphone access, videos will be silent')}catch(e2){$('cam').classList.remove('show');toast('Camera unavailable, pick from your gallery instead');$('pic').click();return}}
+  catch(e){try{cs=await navigator.mediaDevices.getUserMedia({video:{facingMode:face}});toast('No microphone access, videos will be silent. Allow it in Settings.')}catch(e2){$('cam').classList.remove('show');toast('Camera unavailable. Allow it in Settings, or pick from your gallery.');$('pic').click();return}}
   $('live').srcObject=cs;$('live').style.transform=face=='user'?'scaleX(-1)':'none';$('live').play();applyCaps();
 }
 function stopCam(){if(cs)cs.getTracks().forEach(t=>t.stop());cs=null;$('fl').style.display='none'}
@@ -912,19 +925,62 @@ $('pvSave').onclick=()=>{if(pvBlob)saveVideo({blob:pvBlob,ts:Date.now()})};
 $('pvOk').onclick=()=>{const b=closePv();if(b)sendMsg('video',b,$('once').checked)};
 /* voice notes */
 let arec=null,ach=[],as=null;
-$('bMic').onclick=async()=>{if(arec&&arec.state=='recording'){arec.stop();return}try{as=await navigator.mediaDevices.getUserMedia({audio:true});ach=[];arec=new MediaRecorder(as,mimeOpt('audio'));arec.ondataavailable=e=>ach.push(e.data);arec.onstop=()=>{as.getTracks().forEach(t=>t.stop());$('bMic').classList.remove('rec');$('bMic').textContent='🎤';sendMsg('audio',new Blob(ach,{type:arec.mimeType}))};arec.start();$('bMic').classList.add('rec');$('bMic').textContent='⏹';toast('Recording… tap again to send')}catch(e){toast('Microphone access was blocked')}};
+$('bMic').onclick=async()=>{if(arec&&arec.state=='recording'){arec.stop();return}try{as=await navigator.mediaDevices.getUserMedia({audio:true});ach=[];arec=new MediaRecorder(as,mimeOpt('audio'));arec.ondataavailable=e=>ach.push(e.data);arec.onstop=()=>{as.getTracks().forEach(t=>t.stop());$('bMic').classList.remove('rec');$('bMic').textContent='🎤';sendMsg('audio',new Blob(ach,{type:arec.mimeType}))};arec.start();$('bMic').classList.add('rec');$('bMic').textContent='⏹';toast('Recording… tap again to send')}catch(e){toast('Microphone blocked. Allow it in Settings → Camera & microphone.')}};
 /* keep the screen behind a popup still: swipes on the dark area do nothing */
-['st','fo','sm','ask'].forEach(i=>{const m=$(i);if(m)m.addEventListener('touchmove',e=>{if(e.target===m)e.preventDefault()},{passive:false})});
+['st','fo','sm','ask','perm'].forEach(i=>{const m=$(i);if(m)m.addEventListener('touchmove',e=>{if(e.target===m)e.preventDefault()},{passive:false})});
 {const st=$('st'),box=st&&st.firstElementChild;let ty=0;
   if(box){box.addEventListener('touchstart',e=>{ty=e.touches[0].clientY},{passive:true});
     box.addEventListener('touchmove',e=>{const dy=e.touches[0].clientY-ty,top=box.scrollTop<=0,end=box.scrollTop+box.clientHeight>=box.scrollHeight-1;
       if(box.scrollHeight<=box.clientHeight||(top&&dy>0)||(end&&dy<0))e.preventDefault()},{passive:false})}}
+/* ---------- camera and microphone permission ---------- */
+function permHelp(){
+  const u=navigator.userAgent||'';
+  return /iPhone|iPad|iPod/i.test(u)?'iPhone: open the Settings app, tap Safari, then Camera and Microphone, and choose Ask or Allow. Then close and reopen Skein.':
+    /Android/i.test(u)?'Android: tap the lock icon or ⋮ menu in your browser, open Site settings, and allow Camera and Microphone for this site.':
+    /Windows/i.test(u)?'Windows: open Settings, Privacy & security, then Camera and Microphone, and turn on “Let desktop apps access your camera/microphone”. Then restart Skein.':
+    /Mac/i.test(u)?'Mac: open System Settings, Privacy & Security, then Camera and Microphone, and switch Skein on. Then restart Skein.':
+    'Allow camera and microphone for Skein in your system or browser settings.';
+}
+async function askMedia(){
+  const md=navigator.mediaDevices;
+  if(!md||!md.getUserMedia)return{ok:false,msg:'This device or browser can’t use a camera or microphone here.'};
+  const get=async c=>{try{const s=await md.getUserMedia(c);s.getTracks().forEach(t=>t.stop());return'ok'}catch(e){return e&&e.name=='NotFoundError'?'none':'no'}};
+  let cam,mic;
+  if(await get({video:true,audio:true})=='ok')cam=mic='ok';else{cam=await get({video:true});mic=await get({audio:true})}
+  const w=x=>x=='ok'?'on':x=='none'?'not found on this device':'blocked';
+  return{cam,mic,ok:cam=='ok'&&mic=='ok',blocked:cam=='no'||mic=='no',msg:'Camera: '+w(cam)+'. Microphone: '+w(mic)+'.'};
+}
+async function refreshPerm(){
+  const el=$('pmSt');if(!el)return;
+  const q=async n=>{try{return(await navigator.permissions.query({name:n})).state}catch(e){return null}};
+  const[c,m]=await Promise.all([q('camera'),q('microphone')]);
+  const w=s=>s=='granted'?'allowed':s=='denied'?'blocked':s=='prompt'?'not asked yet':'unknown until you try';
+  el.textContent='Camera: '+w(c)+'. Microphone: '+w(m)+'.';
+  $('pmHelp').textContent=c=='denied'||m=='denied'?permHelp():'';
+}
+async function runPerm(statusEl,helpEl){
+  statusEl.textContent='Asking…';
+  const r=await askMedia();
+  statusEl.textContent=r.msg;
+  helpEl.textContent=r.blocked?permHelp():'';
+  refreshPerm();return r;
+}
+function openPerm(){$('pmRes').textContent='';$('pmHow').textContent='';$('pmOk').textContent='Allow';$('perm').classList.add('show')}
+$('pmGo').onclick=async()=>{const r=await runPerm($('pmSt'),$('pmHelp'));if(r.ok)toast('Camera and microphone are ready')};
+$('pmOk').onclick=async()=>{
+  try{localStorage.setItem('sk_permask','1')}catch(e){}
+  if($('pmOk').textContent=='Done'){$('perm').classList.remove('show');return}
+  const r=await runPerm($('pmRes'),$('pmHow'));
+  if(r.ok)setTimeout(()=>$('perm').classList.remove('show'),900);else $('pmOk').textContent='Done';
+};
+$('pmNo').onclick=()=>{try{localStorage.setItem('sk_permask','1')}catch(e){}$('perm').classList.remove('show')};
 /* ---------- boot ---------- */
 (async()=>{
   const fs=await tx('friends','readonly',s=>s.getAll());fs.forEach(f=>friends[f.id]=f);{const last=localStorage.getItem('sk_last');cur=fs.some(f=>f.id==last)?last:fs[0]&&fs[0].id}
   await render();
   try{if(SD)SD.ready()}catch(e){}
   if(!localStorage.getItem('sk_name')){const n=await askText('Welcome! Pick a display name for your friends to see');myName=(n||'Me').slice(0,20);localStorage.setItem('sk_name',myName)}
+  if(!localStorage.getItem('sk_permask'))setTimeout(openPerm,700);
   if(typeof Peer=='undefined'){toast('Couldn’t load the connection library. Check your internet.');return}
   await initKeys();
   startPeer();
