@@ -66,7 +66,7 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
   <div class="strip" id="strip"></div>
   <div style="display:flex;align-items:center;border-bottom:1px solid var(--line)"><div class="stat" id="stat" style="flex:1;border-bottom:0"></div><button class="badge" id="bUn" style="display:none;border:0;cursor:pointer;margin-right:6px" aria-label="Jump to unread chat"></button><button class="badge" id="bFr" style="border:0;cursor:pointer;margin-right:10px;background:var(--them);color:var(--ink)" aria-label="Friend options">⋯</button></div>
   <div id="msgs"></div>
-  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.7.2</span></div>
+  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.7.3</span></div>
   <div class="bar">
     <input type="file" id="pic" accept="image/*,video/*" hidden>
     <input type="file" id="bgIn" accept="image/*" hidden>
@@ -212,7 +212,7 @@ const enc=s=>new TextEncoder().encode(s);
 async function signFor(dev){if(!myPriv)return null;return new Uint8Array(await SUB.sign(SIG,myPriv,enc(myId+'>'+dev)))}
 async function verifyFrom(jwk,sig,dev){try{const k=await SUB.importKey('jwk',{kty:jwk.kty,crv:jwk.crv,x:jwk.x,y:jwk.y},ALG,false,['verify']);return await SUB.verify(SIG,k,new Uint8Array(sig),enc(dev+'>'+myId))}catch(e){return false}}
 /* ---------- theme: auto / light / dark ---------- */
-const APP_VERSION='1.7.2';
+const APP_VERSION='1.7.3';
 function getTheme(){try{const t=localStorage.getItem('sk_theme');return t=='light'||t=='dark'?t:'auto'}catch(e){return'auto'}}
 function applyTheme(t){
   if(t=='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);
@@ -641,7 +641,7 @@ async function upCheck(){
   const keep=up;up={stage:'checking'};renderUp();
   try{
     const r=await SD.check();
-    if(!r||!r.ok)up={stage:'idle',msg:r&&r.needsInstaller?'A newer version needs a full installer. Download it from GitHub.':'Couldn’t check. Make sure you’re online.'};
+    if(!r||!r.ok)up={stage:'idle',msg:r&&r.needsInstaller?'A newer version needs a full installer. Download it from GitHub.':'Couldn’t check ('+String(r&&r.error||'no answer').slice(0,60)+'). Make sure you’re online.'};
     else if(r.newer&&!r.rejected)up={stage:'available',latest:r.latest};
     else if(r.rejected)up={stage:'idle',msg:'Version '+r.latest+' didn’t start properly on this computer and was rolled back.'};
     else up={stage:'uptodate'};
