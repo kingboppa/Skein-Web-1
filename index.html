@@ -8,23 +8,23 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Skein">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#14b8a6">
+<meta name="theme-color" content="#e11d48">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Skein</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2064%2064%22%20width%3D%2264%22%20height%3D%2264%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2216%22%20fill%3D%22%231f1b3d%22/%3E%3Cg%20fill%3D%22none%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%3E%3Cpath%20d%3D%22M9%2038C14%2010%2044%206%2052%2024C58%2038%2034%2058%2024%2040C18%2027%2040%2018%2055%2044%22%20stroke%3D%22%23ff6b6b%22/%3E%3Cpath%20d%3D%22M12%2052C8%2024%2030%2012%2040%2028C48%2042%2022%2050%2020%2032C19%2022%2036%2010%2054%2016%22%20stroke%3D%22%232dd4bf%22/%3E%3Cpath%20d%3D%22M8%2022C22%2036%2030%2060%2046%2050C58%2044%2056%2022%2040%2022C26%2022%2022%2044%2044%2056%22%20stroke%3D%22%23c4b5fd%22/%3E%3C/g%3E%3Cg%20fill%3D%22%23fff%22%20stroke%3D%22%231f1b3d%22%20stroke-width%3D%221.4%22%3E%3Ccircle%20cx%3D%229%22%20cy%3D%2238%22%20r%3D%223%22/%3E%3Ccircle%20cx%3D%2255%22%20cy%3D%2244%22%20r%3D%223%22/%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2252%22%20r%3D%223%22/%3E%3Ccircle%20cx%3D%2254%22%20cy%3D%2216%22%20r%3D%223%22/%3E%3Ccircle%20cx%3D%228%22%20cy%3D%2222%22%20r%3D%223%22/%3E%3Ccircle%20cx%3D%2244%22%20cy%3D%2256%22%20r%3D%223%22/%3E%3C/g%3E%3C/svg%3E">
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
-:root{--bg:#f3faf9;--surface:#fff;--ink:#1a1a1a;--mute:#6b6b6b;--accent:#14b8a6;--me:#c8f1ec;--them:#eee;--line:#d3e5e2;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121212;--surface:#1c1c1c;--ink:#f2f2f2;--mute:#9a9a9a;--me:#0f5f58;--them:#2a2a2a;--line:#333}}
-:root[data-theme="dark"]{--bg:#121212;--surface:#1c1c1c;--ink:#f2f2f2;--mute:#9a9a9a;--me:#0f5f58;--them:#2a2a2a;--line:#333}
+:root{--bg:#fff7f8;--surface:#fff;--ink:#1a1a1a;--mute:#6b6b6b;--accent:#e11d48;--on:#fff;--me:#ffe1e6;--them:#eee;--line:#f0d9dd;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121212;--surface:#1c1c1c;--ink:#f2f2f2;--mute:#9a9a9a;--me:#7a1f31;--them:#2a2a2a;--line:#3a3033}}
+:root[data-theme="dark"]{--bg:#121212;--surface:#1c1c1c;--ink:#f2f2f2;--mute:#9a9a9a;--me:#7a1f31;--them:#2a2a2a;--line:#3a3033}
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--ink);font:16px system-ui,-apple-system,Segoe UI,sans-serif;display:flex;justify-content:center}
 .app{width:100%;max-width:520px;height:100%;display:flex;flex-direction:column;background:var(--surface)}
 header{padding:12px 16px 8px;display:flex;align-items:center;justify-content:space-between}
 h1{margin:0;font-size:20px}
-.badge{font-size:12px;background:var(--accent);color:#1a1a1a;padding:3px 8px;border-radius:99px;font-weight:600}
+.badge{font-size:12px;background:var(--accent);color:var(--on);padding:3px 8px;border-radius:99px;font-weight:600}
 .strip{display:flex;gap:10px;padding:4px 16px 10px;overflow-x:auto;border-bottom:1px solid var(--line)}
 .fr{flex:none;text-align:center;font-size:12px;color:var(--mute);cursor:pointer;background:none;border:0;color:inherit}
 .fr span{display:flex;width:52px;height:52px;border-radius:50%;background:var(--them);align-items:center;justify-content:center;font-size:26px;border:3px solid transparent;margin-bottom:2px}
@@ -42,7 +42,7 @@ h1{margin:0;font-size:20px}
 .bar input[type=text]{flex:1;min-width:0;padding:11px 14px;border-radius:99px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:16px}
 button.ic{width:42px;height:42px;border-radius:50%;border:0;background:var(--them);font-size:19px;cursor:pointer;flex:none}
 button.ic.rec{background:#e5383b;animation:p 1s infinite}
-button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;height:42px;font-weight:700;cursor:pointer;color:#1a1a1a}
+button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;height:42px;font-weight:700;cursor:pointer;color:var(--on)}
 @keyframes p{50%{opacity:.5}}
 .opt{padding:0 14px 8px;font-size:13px;color:var(--mute)}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:16px;z-index:9;color:#fff}
@@ -50,14 +50,14 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
 .modal canvas,.modal video{max-width:100%;max-height:52vh;border-radius:12px;touch-action:none;background:#000}
 .row{display:flex;gap:8px;width:100%;max-width:360px}
 .row input[type=text]{flex:1;padding:10px;border-radius:10px;border:0;font-size:16px}
-.btn{padding:10px 16px;border-radius:99px;border:0;font-weight:700;cursor:pointer;background:var(--accent);color:#1a1a1a}
+.btn{padding:10px 16px;border-radius:99px;border:0;font-weight:700;cursor:pointer;background:var(--accent);color:var(--on)}
 .btn.g{background:#444;color:#fff}
 #toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:8px 14px;border-radius:99px;font-size:14px;display:none;z-index:20}
 .stat{padding:6px 16px;font-size:13px;color:var(--mute);border-bottom:1px solid var(--line)}.dot{position:absolute;width:12px;height:12px;border-radius:50%;background:#3ddc84;margin:38px 0 0 38px;border:2px solid var(--surface)}.dot.u{background:#e5383b;margin:0 0 0 38px}.fr{position:relative}.cbtn{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));background:rgba(0,0,0,.5)!important;color:#fff;z-index:2}
 #camT{position:relative;z-index:2;color:#fff;font-size:14px;text-shadow:0 1px 4px #000;margin-bottom:12px}
 #shut{position:relative;z-index:2;width:78px;height:78px;border-radius:50%;border:5px solid #fff;background:rgba(255,255,255,.25);margin-bottom:calc(30px + env(safe-area-inset-bottom,0px));touch-action:none;user-select:none;-webkit-user-select:none;transition:transform .15s,background .15s}
 #shut.recording{background:#e5383b;transform:scale(1.25)}
-.zrow{position:relative;z-index:2;display:flex;gap:10px;align-items:center;color:#fff;width:80%;max-width:320px;margin-bottom:10px;text-shadow:0 1px 4px #000}.zrow input{flex:1}.cbtn.on{background:var(--accent)!important;color:#1a1a1a}.btn.on{background:#e5383b;color:#fff}.sv{margin-top:6px;border:0;border-radius:99px;padding:6px 12px;background:var(--surface);color:var(--ink);cursor:pointer;font-size:13px}.btn.sel{background:var(--accent);color:#1a1a1a}.btn:disabled{opacity:.5}.hasbg .empty{background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:12px;opacity:.95}</style>
+.zrow{position:relative;z-index:2;display:flex;gap:10px;align-items:center;color:#fff;width:80%;max-width:320px;margin-bottom:10px;text-shadow:0 1px 4px #000}.zrow input{flex:1}.cbtn.on{background:var(--accent)!important;color:var(--on)}.btn.on{background:#e5383b;color:#fff}.sv{margin-top:6px;border:0;border-radius:99px;padding:6px 12px;background:var(--surface);color:var(--ink);cursor:pointer;font-size:13px}.btn.sel{background:var(--accent);color:var(--on)}.btn:disabled{opacity:.5}.hasbg .empty{background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:12px;opacity:.95}</style>
 </head>
 <body>
 <div class="app">
@@ -65,7 +65,7 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
   <div class="strip" id="strip"></div>
   <div style="display:flex;align-items:center;border-bottom:1px solid var(--line)"><div class="stat" id="stat" style="flex:1;border-bottom:0"></div><button class="badge" id="bFr" style="border:0;cursor:pointer;margin-right:10px;background:var(--them);color:var(--ink)" aria-label="Friend options">⋯</button></div>
   <div id="msgs"></div>
-  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.4.0</span></div>
+  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.4.1</span></div>
   <div class="bar">
     <input type="file" id="pic" accept="image/*,video/*" hidden>
     <input type="file" id="bgIn" accept="image/*" hidden>
@@ -195,12 +195,12 @@ const enc=s=>new TextEncoder().encode(s);
 async function signFor(dev){if(!myPriv)return null;return new Uint8Array(await SUB.sign(SIG,myPriv,enc(myId+'>'+dev)))}
 async function verifyFrom(jwk,sig,dev){try{const k=await SUB.importKey('jwk',{kty:jwk.kty,crv:jwk.crv,x:jwk.x,y:jwk.y},ALG,false,['verify']);return await SUB.verify(SIG,k,new Uint8Array(sig),enc(dev+'>'+myId))}catch(e){return false}}
 /* ---------- theme: auto / light / dark ---------- */
-const APP_VERSION='1.4.0';
+const APP_VERSION='1.4.1';
 function getTheme(){try{const t=localStorage.getItem('sk_theme');return t=='light'||t=='dark'?t:'auto'}catch(e){return'auto'}}
 function applyTheme(t){
   if(t=='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);
   const dark=t=='dark'||(t=='auto'&&matchMedia('(prefers-color-scheme: dark)').matches),m=document.querySelector('meta[name="theme-color"]');
-  if(m)m.setAttribute('content',dark?'#121212':'#14b8a6');
+  if(m)m.setAttribute('content',dark?'#121212':'#e11d48');
 }
 applyTheme(getTheme());
 function setTheme(t){try{localStorage.setItem('sk_theme',t)}catch(e){}applyTheme(t);renderSettings()}
