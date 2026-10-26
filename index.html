@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Skein">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#14b8a6">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Skein</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2064%2064%22%20width%3D%2264%22%20height%3D%2264%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2216%22%20fill%3D%22%231f1b3d%22/%3E%3Cg%20fill%3D%22none%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%3E%3Cpath%20d%3D%22M9%2038C14%2010%2044%206%2052%2024C58%2038%2034%2058%2024%2040C18%2027%2040%2018%2055%2044%22%20stroke%3D%22%23ff6b6b%22/%3E%3Cpath%20d%3D%22M12%2052C8%2024%2030%2012%2040%2028C48%2042%2022%2050%2020%2032C19%2022%2036%2010%2054%2016%22%20stroke%3D%22%232dd4bf%22/%3E%3Cpath%20d%3D%22M8%2022C22%2036%2030%2060%2046%2050C58%2044%2056%2022%2040%2022C26%2022%2022%2044%2044%2056%22%20stroke%3D%22%23c4b5fd%22/%3E%3C/g%3E%3Cg%20fill%3D%22%23fff%22%20stroke%3D%22%231f1b3d%22%20stroke-width%3D%221.4%22%3E%3Ccircle%20cx%3D%229%22%20cy%3D%2238%22%20r%3D%223%22/%3E%3Ccircle%20cx%3D%2255%22%20cy%3D%2244%22%20r%3D%223%22/%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2252%22%20r%3D%223%22/%3E%3Ccircle%20cx%3D%2254%22%20cy%3D%2216%22%20r%3D%223%22/%3E%3Ccircle%20cx%3D%228%22%20cy%3D%2222%22%20r%3D%223%22/%3E%3Ccircle%20cx%3D%2244%22%20cy%3D%2256%22%20r%3D%223%22/%3E%3C/g%3E%3C/svg%3E">
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+:root{--bg:#f3faf9;--surface:#fff;--ink:#1a1a1a;--mute:#6b6b6b;--accent:#14b8a6;--me:#c8f1ec;--them:#eee;--line:#d3e5e2;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121212;--surface:#1c1c1c;--ink:#f2f2f2;--mute:#9a9a9a;--me:#0f5f58;--them:#2a2a2a;--line:#333}}
+:root[data-theme="dark"]{--bg:#121212;--surface:#1c1c1c;--ink:#f2f2f2;--mute:#9a9a9a;--me:#0f5f58;--them:#2a2a2a;--line:#333}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:16px system-ui,-apple-system,Segoe UI,sans-serif;display:flex;justify-content:center}
+.app{width:100%;max-width:520px;height:100%;display:flex;flex-direction:column;background:var(--surface)}
+header{padding:12px 16px 8px;display:flex;align-items:center;justify-content:space-between}
+h1{margin:0;font-size:20px}
+.badge{font-size:12px;background:var(--accent);color:#1a1a1a;padding:3px 8px;border-radius:99px;font-weight:600}
+.strip{display:flex;gap:10px;padding:4px 16px 10px;overflow-x:auto;border-bottom:1px solid var(--line)}
+.fr{flex:none;text-align:center;font-size:12px;color:var(--mute);cursor:pointer;background:none;border:0;color:inherit}
+.fr span{display:flex;width:52px;height:52px;border-radius:50%;background:var(--them);align-items:center;justify-content:center;font-size:26px;border:3px solid transparent;margin-bottom:2px}
+.fr.on span{border-color:var(--accent)}
+.fr.on{color:var(--ink);font-weight:600}
+#msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px}
+.m{max-width:78%;padding:9px 12px;border-radius:16px;background:var(--them);align-self:flex-start;word-wrap:break-word}
+.m.me{background:var(--me);align-self:flex-end}
+.m img,.m video{max-width:100%;border-radius:10px;display:block}
+.m audio{max-width:100%}
+.snap{cursor:pointer;font-weight:600;display:flex;gap:8px;align-items:center}
+.snap.done{opacity:.55;cursor:default;font-weight:400}
+.empty{margin:auto;color:var(--mute);text-align:center}
+.bar{display:flex;gap:6px;padding:10px;border-top:1px solid var(--line);align-items:center}
+.bar input[type=text]{flex:1;min-width:0;padding:11px 14px;border-radius:99px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:16px}
+button.ic{width:42px;height:42px;border-radius:50%;border:0;background:var(--them);font-size:19px;cursor:pointer;flex:none}
+button.ic.rec{background:#e5383b;animation:p 1s infinite}
+button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;height:42px;font-weight:700;cursor:pointer;color:#1a1a1a}
+@keyframes p{50%{opacity:.5}}
+.opt{padding:0 14px 8px;font-size:13px;color:var(--mute)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:16px;z-index:9;color:#fff}
+.modal.show{display:flex}
+.modal canvas,.modal video{max-width:100%;max-height:52vh;border-radius:12px;touch-action:none;background:#000}
+.row{display:flex;gap:8px;width:100%;max-width:360px}
+.row input[type=text]{flex:1;padding:10px;border-radius:10px;border:0;font-size:16px}
+.btn{padding:10px 16px;border-radius:99px;border:0;font-weight:700;cursor:pointer;background:var(--accent);color:#1a1a1a}
+.btn.g{background:#444;color:#fff}
+#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:8px 14px;border-radius:99px;font-size:14px;display:none;z-index:20}
+.stat{padding:6px 16px;font-size:13px;color:var(--mute);border-bottom:1px solid var(--line)}.dot{position:absolute;width:12px;height:12px;border-radius:50%;background:#3ddc84;margin:38px 0 0 38px;border:2px solid var(--surface)}.dot.u{background:#e5383b;margin:0 0 0 38px}.fr{position:relative}.cbtn{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));background:rgba(0,0,0,.5)!important;color:#fff;z-index:2}
+#camT{position:relative;z-index:2;color:#fff;font-size:14px;text-shadow:0 1px 4px #000;margin-bottom:12px}
+#shut{position:relative;z-index:2;width:78px;height:78px;border-radius:50%;border:5px solid #fff;background:rgba(255,255,255,.25);margin-bottom:calc(30px + env(safe-area-inset-bottom,0px));touch-action:none;user-select:none;-webkit-user-select:none;transition:transform .15s,background .15s}
+#shut.recording{background:#e5383b;transform:scale(1.25)}
+.zrow{position:relative;z-index:2;display:flex;gap:10px;align-items:center;color:#fff;width:80%;max-width:320px;margin-bottom:10px;text-shadow:0 1px 4px #000}.zrow input{flex:1}.cbtn.on{background:var(--accent)!important;color:#1a1a1a}.btn.on{background:#e5383b;color:#fff}.sv{margin-top:6px;border:0;border-radius:99px;padding:6px 12px;background:var(--surface);color:var(--ink);cursor:pointer;font-size:13px}</style>
+</head>
+<body>
+<div class="app">
+  <header><h1 style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 64 64" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="16" fill="#1f1b3d"/><g fill="none" stroke-width="2.4" stroke-linecap="round"><path d="M9 38C14 10 44 6 52 24C58 38 34 58 24 40C18 27 40 18 55 44" stroke="#ff6b6b"/><path d="M12 52C8 24 30 12 40 28C48 42 22 50 20 32C19 22 36 10 54 16" stroke="#2dd4bf"/><path d="M8 22C22 36 30 60 46 50C58 44 56 22 40 22C26 22 22 44 44 56" stroke="#c4b5fd"/></g><g fill="#fff" stroke="#1f1b3d" stroke-width="1.4"><circle cx="9" cy="38" r="3"/><circle cx="55" cy="44" r="3"/><circle cx="12" cy="52" r="3"/><circle cx="54" cy="16" r="3"/><circle cx="8" cy="22" r="3"/><circle cx="44" cy="56" r="3"/></g></svg>Skein</h1><span><button class="badge" id="bAdd" style="border:0;cursor:pointer">+ Friend</button> <button class="badge" id="bId" style="border:0;cursor:pointer">My ID</button> <button class="badge" id="bStr" style="border:0;cursor:pointer" aria-label="Streaks">🔥</button></span></header>
+  <div class="strip" id="strip"></div>
+  <div class="stat" id="stat"></div>
+  <div id="msgs"></div>
+  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label></div>
+  <div class="bar">
+    <input type="file" id="pic" accept="image/*,video/*" hidden>
+        <button class="ic" id="bCam" title="Camera">📸</button>
+    <button class="ic" id="bPic" title="Photo or video from gallery">🖼</button>
+    <button class="ic" id="bMic" title="Voice note">🎤</button>
+    <input type="text" id="txt" placeholder="Send a message" autocomplete="off">
+    <button class="send" id="bSend">Send</button>
+  </div>
+</div>
+
+<div class="modal" id="ed">
+  <canvas id="cv" width="360" height="480"></canvas>
+  <div class="row"><input type="text" id="cap" placeholder="Add a caption, then drag it"><input type="color" id="col" value="#ffffff"></div>
+  <div class="row"><button class="btn g" id="bDraw">✏️ Draw</button><input type="color" id="pcol" value="#ff3b30"><input type="range" id="psz" min="2" max="28" value="6" style="flex:1"><button class="btn g" id="bUndo">↩</button></div>
+  <div class="row"><span style="align-self:center;font-size:14px;white-space:nowrap">⏱ Timer</span><select id="tmr" style="flex:1;padding:9px;border-radius:10px;border:0;font-size:16px"><option value="1">1 second</option><option value="3">3 seconds</option><option value="5" selected>5 seconds</option><option value="10">10 seconds</option><option value="0">No limit</option></select></div>
+  <div class="row"><button class="btn g" id="edX">Cancel</button><button class="btn" id="edOk" style="flex:1">Send</button></div>
+</div>
+<div class="modal" id="cam" style="padding:0;justify-content:flex-end;overflow:hidden">
+  <video id="live" muted playsinline style="position:absolute;inset:0;width:100%;height:100%;max-height:none;border-radius:0;object-fit:cover"></video>
+  <button class="ic cbtn" id="camX" style="left:14px">✕</button>
+  <button class="ic cbtn" id="camFlip" style="right:14px">🔄</button>
+  <button class="ic cbtn" id="camFl" style="left:50%;margin-left:-21px" aria-label="Flash">⚡</button>
+  <div id="fl" style="display:none;position:absolute;inset:0;background:#fff;opacity:.92;z-index:1"></div>
+  <div class="zrow"><span id="zlab">1.0×</span><input type="range" id="zoom" min="1" max="4" step="0.1" value="1"></div>
+  <div id="camT">Tap for photo · hold for video</div>
+  <button id="shut" aria-label="Shutter"></button>
+</div>
+<div class="modal" id="pv"><video id="pvv" autoplay loop playsinline></video><div class="row"><button class="btn g" id="pvX">Discard</button><button class="btn g" id="pvSave">💾 Save</button><button class="btn" id="pvOk" style="flex:1">Send</button></div></div>
+<div class="modal" id="vw"><div id="vwBody"></div><button class="btn g" id="vwX">Close</button></div>
+<div class="modal" id="sm"><div style="background:var(--surface);color:var(--ink);padding:18px;border-radius:16px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:10px">
+  <h3 id="smT" style="margin:0"></h3><div id="smS" style="font-size:14px;color:var(--mute)"></div>
+  <div style="font-size:14px">Set the streak with this friend (days)</div>
+  <div class="row" style="max-width:none"><input type="text" id="smN" inputmode="numeric" placeholder="0"><button class="btn" id="smSet">Set</button></div>
+  <hr style="width:100%;border:0;border-top:1px solid var(--line)">
+  <div id="smP" style="font-size:14px"></div>
+  <label style="font-size:14px">Pause until (optional) <input type="date" id="smD"></label>
+  <button class="btn" id="smPause"></button><button class="btn g" id="smX">Close</button>
+</div></div>
+<div class="modal" id="ask"><div style="background:var(--surface);color:var(--ink);padding:18px;border-radius:16px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:12px">
+  <div id="askT" style="font-size:15px"></div>
+  <input type="text" id="askI" autocomplete="off" style="padding:11px 14px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:16px;width:100%">
+  <div class="row" style="max-width:none"><button class="btn g" id="askX">Cancel</button><button class="btn" id="askOk" style="flex:1">OK</button></div>
+</div></div>
+<div id="ios" style="display:none;position:fixed;left:8px;right:8px;top:calc(8px + env(safe-area-inset-top,0px));z-index:30;background:#222;color:#fff;padding:10px 12px;border-radius:12px;font-size:14px;gap:10px;align-items:center"><span style="flex:1">To install Skein: tap the Share button, then “Add to Home Screen”, and open it from there so your chats and ID are kept.</span><button class="btn g" onclick="this.parentNode.style.display='none'">✕</button></div>
+<div id="toast"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const toast=t=>{const e=$('toast');e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',3000)};
+function askText(title,def){return new Promise(res=>{
+  const i=$('askI');$('askT').textContent=title;i.value=def||'';$('ask').classList.add('show');setTimeout(()=>{i.focus();i.select()},60);
+  const done=v=>{$('ask').classList.remove('show');$('askOk').onclick=$('askX').onclick=i.onkeydown=null;res(v)};
+  $('askOk').onclick=()=>done(i.value.trim());$('askX').onclick=()=>done(null);
+  i.onkeydown=e=>{if(e.key=='Enter')done(i.value.trim());else if(e.key=='Escape')done(null)};
+})}
+function mimeOpt(k){try{for(const t of[k+'/mp4',k+'/webm'])if(MediaRecorder.isTypeSupported(t))return{mimeType:t}}catch(e){}return{}}
+async function copyText(t){
+  try{await navigator.clipboard.writeText(t);return true}catch(e){}
+  try{const a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;opacity:0';document.body.appendChild(a);a.select();const ok=document.execCommand('copy');a.remove();return ok}catch(e){return false}
+}
+/* ---------- on-device storage (IndexedDB) ---------- */
+const DB=new Promise((ok,no)=>{const r=indexedDB.open('skein',1);r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore('friends',{keyPath:'id'});d.createObjectStore('msgs',{keyPath:'id',autoIncrement:true}).createIndex('f','f')};r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
+const tx=(s,m,fn)=>DB.then(d=>new Promise((ok,no)=>{const t=d.transaction(s,m),q=fn(t.objectStore(s));t.oncomplete=()=>ok(q&&q.result);t.onerror=()=>no(t.error)}));
+const msgsOf=f=>tx('msgs','readonly',s=>s.index('f').getAll(f));
+const putMsg=m=>tx('msgs','readwrite',s=>s.put(m));
+const putFriend=f=>tx('friends','readwrite',s=>s.put(f));
+/* ---------- identity ---------- */
+const rid=n=>Array.from(crypto.getRandomValues(new Uint8Array(n)),b=>'abcdefghjkmnpqrstuvwxyz23456789'[b%31]).join('');
+let myId=localStorage.getItem('sk_id');if(!myId){myId='sk-'+rid(10);localStorage.setItem('sk_id',myId)}
+let myName=localStorage.getItem('sk_name')||'Me';
+const EM=['🦊','🐼','🐸','🐙','🦄','🐯','🐨','🐧'];
+const myOff=new Date().getTimezoneOffset();let myPz=[];try{myPz=JSON.parse(localStorage.getItem('sk_pz')||'[]')}catch(e){}
+let friends={},cur=null,conns={},unread=new Set(),urls={},peer=null;
+/* ---------- networking (WebRTC via PeerJS) ---------- */
+function startPeer(){
+  peer=new Peer(myId,{config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]}});
+  peer.on('connection',c=>setup(c,false));
+  peer.on('disconnected',()=>setTimeout(()=>peer.reconnect(),3000));
+  peer.on('error',e=>{if(e.type=='unavailable-id'){peer.destroy();setTimeout(startPeer,5000)}else if(e.type=='network'||e.type=='server-error'||e.type=='socket-error')toast('Can’t reach the matchmaker. Check your internet.')});
+}
+function connect(id){if(!peer||!peer.open||conns[id]||id==myId)return;setup(peer.connect(id,{reliable:true}),true)}
+function setup(c,out){
+  c.out=out;
+  c.on('open',()=>{
+    const old=conns[c.peer];
+    if(old&&old.open){const keep=(a=>(a.out?myId:a.peer))(old)<(c.out?myId:c.peer)?old:c;(keep===c?old:c).close();if(keep!==c)return}
+    conns[c.peer]=c;c.send({k:'hi',name:myName,tz:myOff});c.send({k:'pz',r:myPz});const bf=friends[c.peer]&&friends[c.peer].base;if(bf)c.send({k:'base',n:bf.n,ts:bf.ts});flush(c.peer);render();
+  });
+  c.on('data',d=>onData(c,d));
+  c.on('close',()=>{if(conns[c.peer]===c){delete conns[c.peer];render()}});
+  c.on('error',()=>{});
+}
+async function onData(c,d){
+  const id=c.peer;
+  if(d.k=='hi'){const tzv=d.tz;setTimeout(()=>{if(friends[id]){friends[id].tz=tzv;putFriend(friends[id]);render()}},0);
+    if(!friends[id]){
+      if(!confirm(d.name+' wants to chat with you. Accept?')){c.close();return}
+      await addFriend(id,d.name)
+    }else if(friends[id].name!=d.name){friends[id].name=d.name;putFriend(friends[id])}
+    render();return;
+  }
+  if(!friends[id])return;
+  if(d.k=='pz'){friends[id].theirPz=d.r;putFriend(friends[id]);render();return}
+  if(d.k=='base'){const f=friends[id];if((f.base&&f.base.ts>=d.ts)||f.declined===d.ts)return;
+    if(confirm(f.name+' says your streak is '+d.n+' day'+(d.n==1?'':'s')+'. Accept?'))f.base={n:d.n,ts:d.ts};else f.declined=d.ts;
+    await putFriend(f);render();return}
+  if(d.k=='ack'){const ms=await msgsOf(id);const m=ms.find(x=>x.uid==d.uid);if(m){m.pend=false;await putMsg(m);if(id==cur)render()}return}
+  if(d.k=='m'){
+    const ms=await msgsOf(id);
+    if(!ms.some(x=>x.uid==d.uid)){
+      const m={f:id,me:false,t:d.t,uid:d.uid,once:d.once,ts:d.ts,secs:d.once&&d.t=='img'?Math.min(30,Math.max(0,+d.secs||0)):0};
+      if(d.t=='text')m.text=d.text;else m.blob=new Blob([d.data],{type:d.mime});
+      await putMsg(m);if(id!=cur)unread.add(id);
+    }
+    c.send({k:'ack',uid:d.uid});render();
+  }
+}
+async function flush(id){
+  const c=conns[id];if(!c||!c.open)return;
+  for(const m of await msgsOf(id))if(m.me&&m.pend)await transmit(c,m);
+}
+async function transmit(c,m){
+  const p={k:'m',uid:m.uid,t:m.t,once:m.once,ts:m.ts,secs:m.secs||0};
+  if(m.t=='text')p.text=m.text;else{if(!m.blob)return;p.mime=m.blob.type;p.data=await m.blob.arrayBuffer()}
+  c.send(p);
+}
+async function sendMsg(t,payload,once,secs){
+  if(!cur)return toast('Add a friend first');
+  if(payload instanceof Blob&&payload.size>25e6)return toast('That file is over 25 MB');
+  const m={f:cur,me:true,t,once:!!once,pend:true,ts:Date.now(),uid:rid(12),secs:(t=='img'&&once&&secs)||0};
+  if(t=='text')m.text=payload;else m.blob=payload;
+  await putMsg(m);render();
+  if(conns[cur]&&conns[cur].open)transmit(conns[cur],m);
+}
+async function addFriend(id,name,n0){
+  const f={id,name:name||id,e:EM[[...id].reduce((a,c)=>a+c.charCodeAt(0),0)%EM.length]};
+  friends[id]=f;await putFriend(f);if(!cur)cur=id;connect(id);if(n0>0)await setBase(id,n0);render();
+}
+$('bAdd').onclick=async()=>{
+  let id=await askText('Paste your friend’s ID (they find it under “My ID”)');
+  if(!id)return;id=id.replace(/^.*#add=/,'').trim();
+  if(id==myId)return toast('That’s your own ID');
+  const n=await askText('What should we call them?');if(n===null)return;
+  const sn=parseInt(await askText('Already have a streak with them? Enter its length in days (0 for none).','0'),10)||0;
+  await addFriend(id,n||id,Math.max(0,sn));
+};
+$('bId').onclick=async()=>{
+  if(await copyText(myId))toast('Your ID “'+myId+'” is copied. Send it to a friend.');
+  else await askText('Your ID (select it and copy)',myId);
+};
+/* ---------- streaks ---------- */
+let info={};
+const sharedOff=f=>myId<f.id?myOff:(f.tz!=null?f.tz:myOff);
+const dayOf=(f,t)=>Math.floor((t-sharedOff(f)*6e4)/864e5);
+const isPaused=()=>myPz.some(r=>r[0]<=Date.now()&&(r[1]==null||r[1]>Date.now()));
+const inR=(f,rs,d,today)=>(rs||[]).some(r=>d>=dayOf(f,r[0])&&d<=(r[1]==null?today:dayOf(f,r[1])));
+function streak(f,ms){
+  const dy=t=>dayOf(f,t),today=dy(Date.now()),A=new Set(),B=new Set();
+  ms.forEach(m=>{if(m.t!='img'&&m.t!='video')return;if(m.me){if(!m.pend)A.add(dy(m.ts))}else B.add(dy(m.ts))});
+  const skip=d=>inR(f,myPz,d,today)||inR(f,f.theirPz,d,today),done=d=>A.has(d)&&B.has(d);
+  const be=f.base?dy(f.base.ts)-1:null;
+  let n=0,d=today,pending=false;
+  if(done(d))n++;else if(!skip(d))pending=true;
+  for(d=today-1;d>today-4000;d--){
+    if(be!==null&&d<=be){if(d==be)n+=f.base.n;break}
+    if(done(d))n++;else if(!skip(d))break;
+  }
+  const left=(today+1)*864e5+sharedOff(f)*6e4-Date.now();
+  return{n,paused:skip(today),mine:A.has(today),theirs:B.has(today),risk:pending&&n>0&&left<8*36e5}
+}
+async function setBase(id,n){
+  const f=friends[id];f.base={n,ts:Date.now()};f.declined=null;await putFriend(f);
+  const c=conns[id];if(c&&c.open)c.send({k:'base',n,ts:f.base.ts});await render();
+}
+function statText(f){
+  const s=info[f.id]||{n:0},p=[conns[f.id]?f.name+' is online':f.name+' is offline. Messages send when you’re both online.'];
+  if(s.n>0)p.push('🔥 '+s.n+'-day streak');
+  const mine=isPaused(),theirs=(f.theirPz||[]).some(r=>r[0]<=Date.now()&&(r[1]==null||r[1]>Date.now()));
+  if(mine||theirs)p.push('⏸ streaks paused'+(mine&&theirs?' by both of you':mine?' by you':' by '+f.name));
+  else if(s.n>0||s.mine||s.theirs)p.push(s.mine&&s.theirs?'✅ today’s photos and videos are done':s.mine?'waiting on '+f.name+'’s photo or video':s.theirs?'your turn: send a photo or video':'send each other a photo or video today');
+  return p.join(' · ');
+}
+function openSm(){
+  const f=friends[cur];if(!f)return toast('Add a friend first');const s=info[cur]||{n:0};
+  $('smT').textContent='🔥 Streak with '+f.name;
+  $('smS').textContent=(s.n>0?s.n+'-day streak. ':'No streak yet. ')+'A day counts when you both send each other a photo or video.';
+  $('smN').value=s.n||'';
+  $('smP').textContent=isPaused()?'⏸ Your streaks are paused. Friends are told, and days away won’t count against anyone.':'Going away for a while? Pause streaks so no days count against you or your friends.';
+  $('smPause').textContent=isPaused()?'Resume my streaks':'Pause all my streaks';
+  $('sm').classList.add('show');
+}
+$('bStr').onclick=openSm;$('smX').onclick=()=>$('sm').classList.remove('show');
+$('smSet').onclick=async()=>{const n=parseInt($('smN').value,10);if(!(n>=0))return toast('Enter a number of days');await setBase(cur,n);toast('Streak set to '+n+'. '+friends[cur].name+' will be asked to confirm.');openSm()};
+$('smPause').onclick=()=>{
+  if(isPaused())myPz.forEach(r=>{if(r[1]==null||r[1]>Date.now())r[1]=Date.now()});
+  else{const v=$('smD').value;let u=null;if(v){const[y,m,dd]=v.split('-').map(Number);u=new Date(y,m-1,dd+1).getTime()-1;if(u<Date.now())return toast('Pick a date in the future')}myPz.push([Date.now(),u])}
+  localStorage.setItem('sk_pz',JSON.stringify(myPz));Object.values(conns).forEach(c=>c.open&&c.send({k:'pz',r:myPz}));render().then(openSm);
+};
+/* ---------- UI ---------- */
+function urlFor(m){if(!m.blob)return'';return urls[m.id]||(urls[m.id]=URL.createObjectURL(m.blob))}
+async function render(){const _i={};await Promise.all(Object.values(friends).map(async f=>{_i[f.id]=streak(f,await msgsOf(f.id))}));info=_i;
+  $('strip').innerHTML='';
+  Object.values(friends).forEach(f=>{
+    const b=document.createElement('button');b.className='fr'+(f.id==cur?' on':'');
+    b.innerHTML=(conns[f.id]?'<i class="dot"></i>':'')+(unread.has(f.id)?'<i class="dot u"></i>':'')+'<span>'+f.e+'</span>';
+    b.append(f.name);const _s=info[f.id];if(_s&&_s.n>0){const sm=document.createElement('small');sm.textContent='🔥'+_s.n+(_s.paused?'⏸':_s.risk?'⏳':'');b.append(document.createElement('br'),sm)}b.onclick=()=>{cur=f.id;unread.delete(f.id);render()};$('strip').appendChild(b)});
+  const box=$('msgs'),f=friends[cur];
+  if(!f){$('stat').textContent='Your ID: '+myId;box.innerHTML='<div class="empty">No friends yet.<br>Tap “My ID” to share yours, or “+ Friend” to add theirs.<br>Everything stays on your device.</div>';return}
+  $('stat').textContent=statText(f);
+  const ms=(await msgsOf(cur)).sort((a,b)=>a.ts-b.ts);
+  box.innerHTML='';if(!ms.length)box.innerHTML='<div class="empty">Say hi to '+f.name+'.</div>';
+  ms.forEach(m=>{
+    const d=document.createElement('div');d.className='m'+(m.me?' me':'');
+    if(m.t=='text')d.textContent=m.text;
+    else if(m.once||!m.blob){
+      d.innerHTML='<div class="snap'+(m.done?' done':'')+'">'+(m.t=='img'?'📷':m.t=='video'?'🎥':'🎤')+(m.done?' Opened':m.me?' Sent · tap to preview':' Tap to view')+(m.secs&&!m.done?' · ⏱ '+m.secs+'s':'')+'</div>';
+      if(!m.done)d.firstChild.onclick=()=>openSnap(m);
+    }else if(m.t=='audio')d.innerHTML='<audio controls src="'+urlFor(m)+'"></audio>';
+    else d.innerHTML=m.t=='img'?'<img src="'+urlFor(m)+'">':'<video controls playsinline src="'+urlFor(m)+'"></video>';
+    if(m.t=='video'&&m.blob&&!m.once){const sb=document.createElement('button');sb.className='sv';sb.textContent='💾 Save video';sb.onclick=()=>saveVideo(m);d.appendChild(sb)}
+    if(m.me&&m.pend){const s=document.createElement('div');s.style.cssText='font-size:11px;color:var(--mute)';s.textContent='⏳ waiting to send';d.appendChild(s)}
+    box.appendChild(d)});
+  box.scrollTop=box.scrollHeight;
+}
+async function saveVideo(m){
+  const ty=(m.blob.type||'video/webm').split(';')[0],ext=ty.includes('mp4')?'mp4':ty.includes('quicktime')?'mov':'webm';
+  const name='skein-'+new Date(m.ts).toISOString().slice(0,19).replace(/[:T]/g,'-')+'.'+ext;
+  const file=new File([m.blob],name,{type:ty});
+  try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});return}}catch(e){if(e.name=='AbortError')return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(m.blob);a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),5000);toast('Saved to your downloads');
+}
+let viewing=null,vT=null;
+function openSnap(m){
+  const u=urlFor(m);
+  $('vwBody').innerHTML=m.t=='img'?'<img src="'+u+'" style="max-width:100%;max-height:75vh;border-radius:12px">':'<video autoplay controls playsinline src="'+u+'" style="max-width:100%;max-height:75vh;border-radius:12px"></video>';
+  $('vw').classList.add('show');viewing=m;
+  if(m.t=='img'&&m.secs){
+    const bar=document.createElement('div');bar.style.cssText='margin-top:10px;height:6px;border-radius:3px;background:#444;overflow:hidden';
+    bar.innerHTML='<div style="height:100%;width:100%;background:var(--accent);transition:width '+m.secs+'s linear"></div>';
+    $('vwBody').appendChild(bar);setTimeout(()=>{if(bar.firstChild)bar.firstChild.style.width='0'},60);
+    let left=m.secs;$('vwX').textContent='Close ('+left+')';
+    clearInterval(vT);vT=setInterval(()=>{left--;if(left<=0){clearInterval(vT);$('vwX').click()}else $('vwX').textContent='Close ('+left+')'},1000);
+  }
+}
+$('vwX').onclick=async()=>{clearInterval(vT);$('vwX').textContent='Close';
+  $('vw').classList.remove('show');$('vwBody').innerHTML='';
+  if(viewing){const m=viewing;viewing=null;m.done=true;m.blob=null;if(urls[m.id]){URL.revokeObjectURL(urls[m.id]);delete urls[m.id]}await putMsg(m)}
+  render();
+};
+function send(){const v=$('txt').value.trim();if(!v)return;$('txt').value='';sendMsg('text',v)}
+$('bSend').onclick=send;$('txt').onkeydown=e=>{if(e.key=='Enter')send()};
+/* photo with caption */
+let img=null,capY=380,drag=false,strokes=[],drawMode=false;
+$('bPic').onclick=()=>$('pic').click();
+$('pic').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;if(f.type.startsWith('video/'))return sendMsg('video',f,$('once').checked);const i=new Image();i.onload=()=>openEd(i);i.src=URL.createObjectURL(f)};
+function draw(){const c=$('cv'),x=c.getContext('2d');x.clearRect(0,0,360,480);const s=Math.max(360/img.width,480/img.height),w=img.width*s,h=img.height*s;x.drawImage(img,(360-w)/2,(480-h)/2,w,h);drawStrokes(x);const t=$('cap').value;if(t){x.fillStyle='rgba(0,0,0,.55)';x.fillRect(0,capY-26,360,52);x.fillStyle=$('col').value;x.font='bold 24px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(t,180,capY,340)}}
+$('cap').oninput=$('col').oninput=draw;
+const cv=$('cv');const py=e=>{const r=cv.getBoundingClientRect();return(e.clientY-r.top)*480/r.height};
+const pxy=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*360/r.width,(e.clientY-r.top)*480/r.height]};
+function drawStrokes(x){x.lineCap='round';x.lineJoin='round';strokes.forEach(k=>{x.strokeStyle=x.fillStyle=k.c;x.lineWidth=k.w;if(k.p.length==1){x.beginPath();x.arc(k.p[0][0],k.p[0][1],k.w/2,0,7);x.fill()}else{x.beginPath();k.p.forEach((p,i)=>i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]));x.stroke()}})}
+function openEd(i){$('tmr').disabled=!$('once').checked;img=i;capY=380;strokes=[];drawMode=false;$('bDraw').classList.remove('on');$('bDraw').textContent='✏️ Draw';$('cap').value='';draw();$('ed').classList.add('show')}
+cv.onpointerdown=e=>{drag=true;if(drawMode)strokes.push({c:$('pcol').value,w:+$('psz').value,p:[pxy(e)]});else capY=py(e);draw()};
+cv.onpointermove=e=>{if(!drag)return;if(drawMode)strokes[strokes.length-1].p.push(pxy(e));else capY=Math.max(26,Math.min(454,py(e)));draw()};
+cv.onpointerup=cv.onpointercancel=()=>drag=false;
+$('bDraw').onclick=()=>{drawMode=!drawMode;$('bDraw').classList.toggle('on',drawMode);$('bDraw').textContent=drawMode?'✋ Move text':'✏️ Draw'};
+$('bUndo').onclick=()=>{strokes.pop();draw()};
+$('edX').onclick=()=>$('ed').classList.remove('show');
+$('edOk').onclick=()=>cv.toBlob(b=>{$('ed').classList.remove('show');sendMsg('img',b,$('once').checked,+$('tmr').value)},'image/jpeg',.85);
+/* live camera: tap = photo, hold = video */
+let cs=null,face='user',crec=null,cch=[],holdT=null,recT=null,recStart=0,pvBlob=null,isRec=false;
+async function startCam(){
+  stopCam();
+  try{cs=await navigator.mediaDevices.getUserMedia({video:{facingMode:face,width:{ideal:1280},height:{ideal:720}},audio:true})}
+  catch(e){try{cs=await navigator.mediaDevices.getUserMedia({video:{facingMode:face}});toast('No microphone access, videos will be silent')}catch(e2){$('cam').classList.remove('show');toast('Camera unavailable, pick from your gallery instead');$('pic').click();return}}
+  $('live').srcObject=cs;$('live').style.transform=face=='user'?'scaleX(-1)':'none';$('live').play();applyCaps();
+}
+function stopCam(){if(cs)cs.getTracks().forEach(t=>t.stop());cs=null;$('fl').style.display='none'}
+$('bCam').onclick=()=>{if(!cur)return toast('Add a friend first');$('cam').classList.add('show');startCam()};
+$('camX').onclick=()=>{if(isRec&&crec){crec.onstop=null;clearInterval(recT);crec.stop();isRec=false;sh.classList.remove('recording');$('camT').textContent='Tap for photo · hold for video'}stopCam();$('cam').classList.remove('show')};
+$('camFlip').onclick=()=>{if(isRec)return;face=face=='user'?'environment':'user';startCam()};
+const sh=$('shut');
+sh.oncontextmenu=e=>e.preventDefault();
+sh.onpointerdown=e=>{e.preventDefault();try{sh.setPointerCapture(e.pointerId)}catch(_){}holdT=setTimeout(beginRec,350)};
+sh.onpointerup=sh.onpointercancel=()=>{if(holdT){clearTimeout(holdT);holdT=null;snap()}else if(isRec)endRec()};
+let flashOn=false,hasTorch=false,hwZoom=false,zoomV=1,zr=[1,4];
+function applyCaps(){
+  const t=cs.getVideoTracks()[0],c=t.getCapabilities?t.getCapabilities():{};
+  hwZoom=!!c.zoom;hasTorch=!!c.torch;zr=hwZoom?[c.zoom.min,Math.min(c.zoom.max,8)]:[1,4];
+  $('zoom').min=zr[0];$('zoom').max=zr[1];setZoom(zr[0]);
+}
+function setZoom(z){
+  zoomV=Math.max(zr[0],Math.min(zr[1],z));$('zoom').value=zoomV;$('zlab').textContent=zoomV.toFixed(1)+'×';
+  if(hwZoom){cs.getVideoTracks()[0].applyConstraints({advanced:[{zoom:zoomV}]}).catch(()=>{})}
+  else $('live').style.transform=(face=='user'?'scaleX(-1) ':'')+'scale('+zoomV+')';
+}
+$('zoom').oninput=e=>setZoom(+e.target.value);
+let pd=0,pz=1;const cm=$('cam'),dist=e=>Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+cm.addEventListener('touchstart',e=>{if(e.touches.length==2){pd=dist(e);pz=zoomV}},{passive:true});
+cm.addEventListener('touchmove',e=>{if(e.touches.length==2&&pd)setZoom(pz*dist(e)/pd)},{passive:true});
+cm.addEventListener('touchend',e=>{if(e.touches.length<2)pd=0},{passive:true});
+$('camFl').onclick=()=>{flashOn=!flashOn;$('camFl').classList.toggle('on',flashOn)};
+const setTorch=on=>{const t=cs&&cs.getVideoTracks()[0];return t?t.applyConstraints({advanced:[{torch:on}]}).catch(()=>{}):Promise.resolve()};
+const fillLight=on=>{if(hasTorch&&face!='user')return setTorch(on);$('fl').style.display=on?'block':'none';return Promise.resolve()};
+async function snap(){
+  const v=$('live');if(!v.videoWidth)return;
+  if(flashOn){await fillLight(true);await new Promise(r=>setTimeout(r,450))}
+  const W=v.videoWidth,H=v.videoHeight,z=hwZoom?1:zoomV,cw=Math.round(W/z),ch=Math.round(H/z);
+  const c=document.createElement('canvas');c.width=cw;c.height=ch;const x=c.getContext('2d');
+  if(face=='user'){x.translate(cw,0);x.scale(-1,1)}
+  x.drawImage(v,(W-cw)/2,(H-ch)/2,cw,ch,0,0,cw,ch);
+  await fillLight(false);stopCam();$('cam').classList.remove('show');openEd(c);
+}
+function beginRec(){
+  holdT=null;if(!cs)return;cch=[];
+  try{crec=new MediaRecorder(cs,mimeOpt('video'))}catch(e){return toast('Video recording isn’t supported here')}
+  crec.ondataavailable=e=>{if(e.data.size)cch.push(e.data)};
+  crec.onstop=()=>{fillLight(false);clearInterval(recT);isRec=false;sh.classList.remove('recording');$('camT').textContent='Tap for photo · hold for video';const b=new Blob(cch,{type:crec.mimeType||'video/webm'});if(b.size<1000)return;pvBlob=b;stopCam();$('cam').classList.remove('show');$('pvv').src=URL.createObjectURL(b);$('pv').classList.add('show')};
+  if(flashOn)fillLight(true);crec.start();isRec=true;sh.classList.add('recording');recStart=Date.now();
+  recT=setInterval(()=>{const t=(Date.now()-recStart)/1000;$('camT').textContent='● '+Math.floor(t)+'s / 30s';if(t>=30)endRec()},250);
+}
+function endRec(){if(crec&&crec.state=='recording')crec.stop()}
+const closePv=()=>{$('pv').classList.remove('show');$('pvv').removeAttribute('src');const b=pvBlob;pvBlob=null;return b};
+$('pvX').onclick=closePv;
+$('pvSave').onclick=()=>{if(pvBlob)saveVideo({blob:pvBlob,ts:Date.now()})};
+$('pvOk').onclick=()=>{const b=closePv();if(b)sendMsg('video',b,$('once').checked)};
+/* voice notes */
+let arec=null,ach=[],as=null;
+$('bMic').onclick=async()=>{if(arec&&arec.state=='recording'){arec.stop();return}try{as=await navigator.mediaDevices.getUserMedia({audio:true});ach=[];arec=new MediaRecorder(as,mimeOpt('audio'));arec.ondataavailable=e=>ach.push(e.data);arec.onstop=()=>{as.getTracks().forEach(t=>t.stop());$('bMic').classList.remove('rec');$('bMic').textContent='🎤';sendMsg('audio',new Blob(ach,{type:arec.mimeType}))};arec.start();$('bMic').classList.add('rec');$('bMic').textContent='⏹';toast('Recording… tap again to send')}catch(e){toast('Microphone access was blocked')}};
+/* ---------- boot ---------- */
+(async()=>{
+  const fs=await tx('friends','readonly',s=>s.getAll());fs.forEach(f=>friends[f.id]=f);cur=fs[0]&&fs[0].id;
+  await render();
+  if(!localStorage.getItem('sk_name')){const n=await askText('Welcome! Pick a display name for your friends to see');myName=(n||'Me').slice(0,20);localStorage.setItem('sk_name',myName)}
+  if(typeof Peer=='undefined'){toast('Couldn’t load the connection library. Check your internet.');return}
+  startPeer();
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+  if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!navigator.standalone&&!matchMedia('(display-mode: standalone)').matches)$('ios').style.display='flex';
+  document.addEventListener('visibilitychange',()=>{if(document.hidden||!peer)return;if(peer.destroyed)startPeer();else if(peer.disconnected)peer.reconnect();Object.keys(friends).forEach(connect)});
+  if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+  const h=location.hash.match(/add=([\w-]+)/);if(h&&!friends[h[1]]&&h[1]!=myId){const n=await askText('Add this friend. What should we call them?');if(n)addFriend(h[1],n)}
+  setInterval(()=>Object.keys(friends).forEach(connect),10000);setInterval(render,60000);
+  peer.on('open',()=>Object.keys(friends).forEach(connect));
+})();
+</script>
+</body></html>
