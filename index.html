@@ -280,7 +280,7 @@ const enc=s=>new TextEncoder().encode(s);
 async function signFor(dev){if(!myPriv)return null;return new Uint8Array(await SUB.sign(SIG,myPriv,enc(myId+'>'+dev)))}
 async function verifyFrom(jwk,sig,dev){try{const k=await SUB.importKey('jwk',{kty:jwk.kty,crv:jwk.crv,x:jwk.x,y:jwk.y},ALG,false,['verify']);return await SUB.verify(SIG,k,new Uint8Array(sig),enc(dev+'>'+myId))}catch(e){return false}}
 /* ---------- theme: auto / light / dark ---------- */
-const APP_VERSION='1.16.2';
+const APP_VERSION='1.16.3';
 function getTheme(){try{const t=localStorage.getItem('sk_theme');return t=='light'||t=='dark'?t:'auto'}catch(e){return'auto'}}
 function applyTheme(t){
   if(t=='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);
@@ -526,7 +526,7 @@ async function mbOutbox(){
     for(const f of Object.values(friends)){
       for(const m of await msgsOf(f.id)){
         if(!m.me||m.unsent||now-m.ts>KEEP_MS||(m.t!='text'&&!m.blob))continue;
-        const due=(n,at,miss)=>n<5&&(!at||now-at>(miss&&miss.length?3e5:2e4));
+        const due=(n,at,miss)=>!at||now-at>((miss&&miss.length)||n>=5?3e5:2e4);
         const grp=isGrp(f);
         for(const tf of tFriends(f)){
           const st=grp?((m.gs&&m.gs[tf.id])||{}):m,mark=p=>grp?mbMarkG(f.id,m.uid,tf.id,p):mbMark(f.id,m.uid,p);
@@ -973,7 +973,7 @@ async function renderNow(lazy){const _i={},_u={};let skipped=false;await Promise
       const dl=document.createElement('button');dl.className='sv';dl.textContent='💾 Download';dl.onclick=e=>{e.stopPropagation();saveMedia(m)};r.appendChild(dl);d.appendChild(r);
     }
     if(m.saved){const k=document.createElement('div');k.className='kp';k.textContent='📌 Saved on this device';d.appendChild(k)}
-    if(m.me&&m.pend){const s=document.createElement('div');s.style.cssText='font-size:11px;color:var(--mute)';s.textContent=isGrp(f)&&(m.acks||[]).length?'⏳ delivered to '+m.acks.length+' of '+gTargets(f).length:'⏳ waiting to send';d.appendChild(s)}
+    if(m.me&&m.pend){const s=document.createElement('div');s.style.cssText='font-size:11px;color:var(--mute)';s.textContent=isGrp(f)&&(m.acks||[]).length?'⏳ delivered to '+m.acks.length+' of '+gTargets(f).length:(!isGrp(f)&&m.mbAt&&m.mbMiss&&!m.mbMiss.length?'📬 in the mailbox, arrives when '+dn(f)+' opens Skein':!mbUrl?'⏳ waiting for '+dn(f)+' to come online (no mailbox set up)':'⏳ waiting to send');d.appendChild(s)}
     box.appendChild(d)});
   if(scrollKeep!=null){box.scrollTop=box.scrollHeight-scrollKeep;scrollKeep=null}else box.scrollTop=box.scrollHeight;
 }
