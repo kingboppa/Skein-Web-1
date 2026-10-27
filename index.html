@@ -66,7 +66,7 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
   <div class="strip" id="strip"></div>
   <div style="display:flex;align-items:center;border-bottom:1px solid var(--line)"><div class="stat" id="stat" style="flex:1;border-bottom:0"></div><button class="badge" id="bUn" style="display:none;border:0;cursor:pointer;margin-right:6px" aria-label="Jump to unread chat"></button><button class="badge" id="bFr" style="border:0;cursor:pointer;margin-right:10px;background:var(--them);color:var(--ink)" aria-label="Friend options">⋯</button></div>
   <div id="msgs"></div>
-  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.16.1</span></div>
+  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.16.2</span></div>
   <div id="rpBar"><div class="qt" id="rpTx"></div><button id="rpX" title="Cancel reply">✕</button></div>
   <div class="bar">
     <input type="file" id="pic" accept="image/*,video/*" hidden>
@@ -280,7 +280,7 @@ const enc=s=>new TextEncoder().encode(s);
 async function signFor(dev){if(!myPriv)return null;return new Uint8Array(await SUB.sign(SIG,myPriv,enc(myId+'>'+dev)))}
 async function verifyFrom(jwk,sig,dev){try{const k=await SUB.importKey('jwk',{kty:jwk.kty,crv:jwk.crv,x:jwk.x,y:jwk.y},ALG,false,['verify']);return await SUB.verify(SIG,k,new Uint8Array(sig),enc(dev+'>'+myId))}catch(e){return false}}
 /* ---------- theme: auto / light / dark ---------- */
-const APP_VERSION='1.16.1';
+const APP_VERSION='1.16.2';
 function getTheme(){try{const t=localStorage.getItem('sk_theme');return t=='light'||t=='dark'?t:'auto'}catch(e){return'auto'}}
 function applyTheme(t){
   if(t=='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);
@@ -330,7 +330,7 @@ function setup(c,out){
   c.on('open',()=>{
     const old=conns[c.peer];
     if(old&&old.open){const keep=(a=>(a.out?myId:a.peer))(old)<(c.out?myId:c.peer)?old:c;(keep===c?old:c).close();if(keep!==c)return}
-    conns[c.peer]=c;sendHi(c).catch(()=>{});render();
+    conns[c.peer]=c;sendHi(c).catch(()=>{});try{c.send({k:'pp'})}catch(e){}render();
   });
   c.on('data',d=>{dq=dq.then(()=>onData(c,d)).catch(e=>console.error('skein',e))});
   c.on('close',()=>{if(conns[c.peer]===c){delete conns[c.peer];if(c.role=='friend'&&friends[c.acct]&&!friendConns(c.acct).length){const f=friends[c.acct];f.seen=Date.now();f.away=false;delete typing[f.id];putFriend(f)}render();renderSettings()}});
@@ -368,7 +368,7 @@ async function onHi(c,d){
 async function onData(c,d){
   if(!d||typeof d!='object')return;
   if(d.k=='pp'){try{c.send({k:'pq'})}catch(e){}return}
-  if(d.k=='pq'){c.alive=Date.now();return}
+  if(d.k=='pq'){c.alive=Date.now();c.ponger=true;return}
   if(d.k=='link')return onLink(c,d);
   if(d.k=='hi')return onHi(c,d);
   if(c.role=='sib')return onSib(c,d);
@@ -413,7 +413,7 @@ const ECDH={name:'ECDH',namedCurve:'P-256'};
 async function mbTok(){const k=JSON.parse(localStorage.getItem('sk_key')||'null');if(!k||!k.priv||!k.priv.d)return null;return b64(new Uint8Array(await SUB.digest('SHA-256',enc('skein-mb-v1|'+myId+'|'+k.priv.d)))).replace(/=+$/,'')}
 async function mbCall(o){
   if(!mbUrl)throw new Error('no mailbox set');
-  const ac=new AbortController(),to=setTimeout(()=>ac.abort(),60000);ac.t0=Date.now();mbLive.add(ac);
+  const ac=new AbortController(),to=setTimeout(()=>ac.abort(),60000);ac.t0=Date.now();ac.a=o.a;mbLive.add(ac);
   try{const r=await fetch(mbUrl,{method:'POST',body:JSON.stringify(o),redirect:'follow',signal:ac.signal});return await r.json()}finally{clearTimeout(to);mbLive.delete(ac)}
 }
 const cat=(...a)=>{const o=new Uint8Array(a.reduce((n,x)=>n+x.length,0));let p=0;a.forEach(x=>{o.set(x,p);p+=x.length});return o};
@@ -493,7 +493,7 @@ async function mbDeposit(toAcct,devs,hdr,data){
   return devs.filter(d=>!to.includes(d)||(r.miss||[]).includes(d));
 }
 const mbLive=new Set();let mbGen=0;
-const mbAbortOld=ms=>{const n=Date.now();mbLive.forEach(ac=>{if(n-ac.t0>ms)ac.abort()})};
+const mbAbortOld=ms=>{const n=Date.now();mbLive.forEach(ac=>{if(n-ac.t0>ms&&(ac.a=='list'||ac.a=='get'||ac.a=='del'||ac.a=='has'))ac.abort()})};
 async function mbPull(force){
   if(!mbUrl||!myPriv)return;if(mbBusy&&force!==true)return;
   const gen=++mbGen;mbBusy=true;
@@ -1480,7 +1480,7 @@ function pingAll(){
   const t0=Date.now();
   Object.values(conns).forEach(c=>{if(c&&c.open){c.pingAt=t0;try{c.send({k:'pp'})}catch(e){try{c.close()}catch(x){}}}});
   setTimeout(()=>{
-    Object.values(conns).forEach(c=>{if(c&&c.open&&c.pingAt==t0&&!(c.alive>=t0)){try{c.close()}catch(e){}if(conns[c.peer]===c)delete conns[c.peer]}});
+    Object.values(conns).forEach(c=>{if(c&&c.open&&c.ponger&&c.pingAt==t0&&!(c.alive>=t0)){try{c.close()}catch(e){}if(conns[c.peer]===c)delete conns[c.peer]}});
     connectAll();render();
   },3000);
 }
