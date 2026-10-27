@@ -66,7 +66,7 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
   <div class="strip" id="strip"></div>
   <div style="display:flex;align-items:center;border-bottom:1px solid var(--line)"><div class="stat" id="stat" style="flex:1;border-bottom:0"></div><button class="badge" id="bUn" style="display:none;border:0;cursor:pointer;margin-right:6px" aria-label="Jump to unread chat"></button><button class="badge" id="bFr" style="border:0;cursor:pointer;margin-right:10px;background:var(--them);color:var(--ink)" aria-label="Friend options">⋯</button></div>
   <div id="msgs"></div>
-  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.8.1</span></div>
+  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.9.0</span></div>
   <div class="bar">
     <input type="file" id="pic" accept="image/*,video/*" hidden>
     <input type="file" id="bgIn" accept="image/*" hidden>
@@ -122,6 +122,14 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
   </div>
   <button class="btn g" id="lkUse">Use an account from another device</button>
   <div style="font-size:12px;color:var(--mute)">Linked devices share your friends, chats and streaks while they are online together. Anyone who holds a linked device can read your chats, so keep your devices locked.</div>
+  <hr style="width:100%;border:0;border-top:1px solid var(--line)">
+  <div style="font-size:14px;font-weight:600">Notifications</div>
+  <div id="pnSt" style="font-size:13px"></div>
+  <button class="btn" id="pnGo">Turn on notifications</button>
+  <div class="row" style="max-width:none"><button class="btn g" id="pnN" style="flex:1">Name only</button><button class="btn g" id="pnP" style="flex:1">Preview</button><button class="btn g" id="pnG" style="flex:1">Generic</button></div>
+  <button class="btn g" id="pnTest" style="display:none">Send a test notification</button>
+  <div id="pnHelp" style="font-size:12px;color:var(--mute)"></div>
+  <div style="font-size:12px;color:var(--mute)">“Name only” shows who messaged you. “Preview” also shows the text. “Generic” shows just “New message”. Notifications are encrypted from your friend’s device to yours, and the mailbox only passes them along.</div>
   <hr style="width:100%;border:0;border-top:1px solid var(--line)">
   <div style="font-size:14px;font-weight:600">Disappearing chats</div>
   <div style="font-size:12px;color:var(--mute)">Messages are deleted from this device about 24 hours after you see them. Tap a message or photo to save it, and tap again to unsave. Saved items stay on this device only.</div>
@@ -233,7 +241,7 @@ const enc=s=>new TextEncoder().encode(s);
 async function signFor(dev){if(!myPriv)return null;return new Uint8Array(await SUB.sign(SIG,myPriv,enc(myId+'>'+dev)))}
 async function verifyFrom(jwk,sig,dev){try{const k=await SUB.importKey('jwk',{kty:jwk.kty,crv:jwk.crv,x:jwk.x,y:jwk.y},ALG,false,['verify']);return await SUB.verify(SIG,k,new Uint8Array(sig),enc(dev+'>'+myId))}catch(e){return false}}
 /* ---------- theme: auto / light / dark ---------- */
-const APP_VERSION='1.8.1';
+const APP_VERSION='1.9.0';
 function getTheme(){try{const t=localStorage.getItem('sk_theme');return t=='light'||t=='dark'?t:'auto'}catch(e){return'auto'}}
 function applyTheme(t){
   if(t=='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);
@@ -272,7 +280,7 @@ async function packMsg(m){
 }
 async function sibForward(m){if(sibConns().length)toSibs(await packMsg(m))}
 async function sendHi(c){
-  const p={k:'hi',name:myName,tz:myOff,acct:myAcct,devs:myDevs};if(mbUrl)p.mb=mbUrl;
+  const p={k:'hi',name:myName,tz:myOff,acct:myAcct,devs:myDevs};if(mbUrl)p.mb=mbUrl;p.push=pushShare()||0;
   if(myPubJwk){const s=await signFor(c.peer);if(s){p.pub=myPubJwk;p.sig=s}}
   c.send(p);
 }
@@ -309,6 +317,7 @@ async function onHi(c,d){
   if(ds.size!=n0||!f.devs){f.devs=[...ds];ch=true}
   if(d.name&&f.name!=d.name){f.name=String(d.name).slice(0,30);ch=true}
   if(d.tz!=null&&f.tz!==d.tz){f.tz=d.tz;ch=true}
+  if('push' in d&&pushStore(f,dev,d.push||null))ch=true;
   if(ch)await putFriend(f);
   if(d.mb&&!mbUrl&&MB_RE.test(d.mb)&&f.mbAsked!==d.mb){f.mbAsked=d.mb;await putFriend(f);if(confirm(dn(f)+' uses an offline mailbox, so you can message each other even when one of you is offline. Use the same one? It only ever holds locked messages.'))setMailbox(d.mb)}
   const first=c.role!='friend';c.role='friend';c.acct=acct;
@@ -332,7 +341,7 @@ async function onData(c,d){
     if(!ms.some(x=>x.uid==d.uid)){
       const m={f:id,me:false,read:false,t:d.t,uid:d.uid,once:d.once,ts:d.ts,secs:d.once&&d.t=='img'?Math.min(30,Math.max(0,+d.secs||0)):0};
       if(d.t=='text')m.text=d.text;else m.blob=new Blob([d.data],{type:d.mime});
-      await putMsg(m);sibForward(m);
+      await putMsg(m);sibForward(m);notifyLocal(friends[id],m);
     }
     c.send({k:'ack',uid:d.uid});render();
   }
@@ -398,12 +407,13 @@ async function mbHandle(text){
     if(!dup){
       const m={f:f.id,me:false,read:false,t:h.t,uid:h.uid,once:!!h.once,ts:h.ts,secs:h.once&&h.t=='img'?Math.min(30,Math.max(0,+h.secs||0)):0};
       if(h.t=='text')m.text=String(h.text||'').slice(0,20000);else m.blob=new Blob([o.data],{type:String(h.mime||'').slice(0,60)});
-      await putMsg(m);sibForward(m);
+      await putMsg(m);sibForward(m);notifyLocal(f,m);
     }
     render();
     if(!dup)mbDeposit(f.id,f.devs||[f.id],{kind:'ack',uid:h.uid},null).catch(()=>{});
     return'ok';
   }
+  if(h.kind=='sub'){const f=friends[h.from];if(!f||h.from==myAcct||typeof h.dev!='string')return'bad';if(pushStore(f,h.dev,h.sub||null))await putFriend(f);return'ok'}
   if(h.kind=='sm'&&h.from==myAcct&&okMsg(h)&&friends[h.f]){
     await onSib(null,{k:'sm',f:h.f,me:true,t:h.t,uid:h.uid,once:!!h.once,ts:h.ts,secs:h.secs||0,done:false,read:true,text:h.t=='text'?String(h.text||''):undefined,mime:h.mime,data:h.t=='text'?undefined:o.data.buffer});
     return'ok';
@@ -608,7 +618,7 @@ async function sendMsg(t,payload,once,secs){
   await putMsg(m);render();
   friendConns(cur).forEach(c=>transmit(c,m));
   sibForward(Object.assign({},m,{pend:false}));
-  if(mbUrl)mbOutbox();
+  if(mbUrl){mbOutbox();pushNotify(friends[cur],m).catch(()=>{})}
 }
 async function addFriend(id,name,n0,hint,nick){
   const f={id,name:name||id,e:EM[[...id].reduce((a,c)=>a+c.charCodeAt(0),0)%EM.length],devs:[...new Set([id,...(hint||[])])],nick:nick||'',nickTs:nick?Date.now():0};
@@ -638,7 +648,7 @@ function renderSettings(){
   const box=$('stDevs');box.innerHTML='';
   myDevs.forEach(d=>{const r=document.createElement('div');r.style.padding='3px 0';const on=d.id==myId||(conns[d.id]&&conns[d.id].open&&conns[d.id].role=='sib');r.textContent=(on?'🟢 ':'⚪ ')+d.l+(d.id==myId?' (this device)':'');box.appendChild(r)});
   $('lkNew').disabled=!myPriv;
-  refreshPerm();
+  refreshPerm();renderPush();
   $('mbSt').textContent=!mbUrl?'Off. Messages only arrive while you are both online.':mbStat.ok===false?'Problem: '+mbStat.msg:mbStat.t?'On. Last checked '+new Date(mbStat.t).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'On. Checking…';
   $('mbRm').style.display=mbUrl?'':'none';$('mbSet').textContent=mbUrl?'Change link':'Set mailbox link';
   if(pendingLink&&Date.now()>pendingLink.exp)pendingLink=null;
@@ -1016,6 +1026,137 @@ async function toggleSaved(m){
 function openDis(){$('dis').classList.add('show')}
 $('disOk').onclick=()=>{try{localStorage.setItem('sk_dis','1')}catch(e){}$('dis').classList.remove('show');if(!localStorage.getItem('sk_permask'))setTimeout(openPerm,400)};
 setInterval(sweepExpired,3e5);
+/* ---------- notifications: web push is signed and encrypted on the sender's device and only forwarded by the mailbox script ---------- */
+const VAPID_PUB='BE1-EHR3YRoR2rC-WI2RmmdqPczRRKBhTwE_qxSjMpfWvEIJ1h_njGrKo6Ejc85ht2vE54D2sU24A_yzpJDqq7w',VAPID_SUB='https://kingboppa.github.io/Skein-Web-1/';
+const VAPID_JWK={"kty":"EC","crv":"P-256","x":"TX4QdHdhGhHasL5YjZGaZ2o9zNFEoGFPAT-rFKMyl9Y","y":"vEIJ1h_njGrKo6Ejc85ht2vE54D2sU24A_yzpJDqq7w","d":"KmFt49wFKHXJ_Z_XECFAQ_aIpLaSWXYC_hDmKj2rSGA"};   /* one shared app key: it only lets a device send notifications, never read anything */
+const PUSH_RE=/^https:\/\/(web\.push\.apple\.com|fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|[a-z0-9.-]+\.push\.services\.mozilla\.com|[a-z0-9.-]+\.notify\.windows\.com)\/[\x21-\x7e]{1,600}$/;
+const b64u=u=>b64(u).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const unb64u=s=>unb64(String(s).replace(/-/g,'+').replace(/_/g,'/'));
+const pushPv=()=>{let v='name';try{v=localStorage.getItem('sk_pushpv')}catch(e){}return v=='none'||v=='full'?v:'name'};
+const pushLoad=()=>{try{return JSON.parse(localStorage.getItem('sk_push')||'null')}catch(e){return null}};
+const pushShare=()=>{const s=pushLoad();return s&&s.e?{e:s.e,p:s.p,a:s.a,pv:pushPv()}:null};
+let vapidKey=null,mbInfo=null;
+/* RFC 8291: aes128gcm web push encryption */
+async function pushEncrypt(sub,plain,opt){
+  opt=opt||{};const ua=unb64u(sub.p),auth=unb64u(sub.a);
+  if(ua.length!=65||auth.length<16)throw new Error('bad subscription');
+  const uak=await SUB.importKey('raw',ua,ECDH,false,[]),eph=opt.eph||await SUB.generateKey(ECDH,true,['deriveBits']);
+  const asPub=new Uint8Array(await SUB.exportKey('raw',eph.publicKey)),secret=new Uint8Array(await SUB.deriveBits({name:'ECDH',public:uak},eph.privateKey,256));
+  const hk=async(salt,ikm,info,len)=>new Uint8Array(await SUB.deriveBits({name:'HKDF',hash:'SHA-256',salt,info},await SUB.importKey('raw',ikm,'HKDF',false,['deriveBits']),len*8));
+  const ikm=await hk(auth,secret,cat(enc('WebPush: info\0'),ua,asPub),32),salt=opt.salt||crypto.getRandomValues(new Uint8Array(16));
+  const cek=await hk(salt,ikm,enc('Content-Encoding: aes128gcm\0'),16),nonce=await hk(salt,ikm,enc('Content-Encoding: nonce\0'),12);
+  const ct=new Uint8Array(await SUB.encrypt({name:'AES-GCM',iv:nonce},await SUB.importKey('raw',cek,'AES-GCM',false,['encrypt']),cat(plain,new Uint8Array([2]))));
+  const rs=new Uint8Array(4);new DataView(rs.buffer).setUint32(0,4096);
+  return cat(salt,rs,new Uint8Array([65]),asPub,ct);
+}
+/* RFC 8292: VAPID proof that this notification is allowed to be sent */
+async function vapidHeader(endpoint,exp){
+  vapidKey=vapidKey||await SUB.importKey('jwk',VAPID_JWK,ALG,false,['sign']);
+  const j=o=>b64u(enc(JSON.stringify(o))),head=j({typ:'JWT',alg:'ES256'}),body=j({aud:new URL(endpoint).origin,exp:exp||Math.floor(Date.now()/1000)+12*3600,sub:VAPID_SUB});
+  const sig=new Uint8Array(await SUB.sign(SIG,vapidKey,enc(head+'.'+body)));
+  return'vapid t='+head+'.'+body+'.'+b64u(sig)+', k='+VAPID_PUB;
+}
+/* returns the push service's HTTP status (201 = accepted, 404/410 = that device no longer wants notifications) or a text reason */
+async function pushSend(sub,obj){
+  if(!mbUrl)return'no mailbox set';
+  if(!sub||!PUSH_RE.test(sub.e))return'bad address';
+  const body=await pushEncrypt(sub,enc(JSON.stringify(obj))),tok=await mbTok();
+  const r=await mbCall({a:'relay',dev:myId,tok,url:sub.e,headers:{Authorization:await vapidHeader(sub.e),TTL:'86400',Urgency:'high'},body:b64(body)});
+  if(!r)return'no answer';
+  return r.ok?r.status:(r.err=='unknown action'?'old script':r.err||'failed');
+}
+function pushStore(f,dev,s){
+  if(!f||typeof dev!='string')return false;
+  f.push=f.push||{};
+  if(!s){if(f.push[dev]){delete f.push[dev];return true}return false}
+  if(typeof s.e!='string'||!PUSH_RE.test(s.e)||typeof s.p!='string'||typeof s.a!='string'||s.p.length>100||s.a.length>40)return false;
+  const n={e:s.e,p:s.p,a:s.a,pv:s.pv=='none'||s.pv=='full'?s.pv:'name'},o=f.push[dev];
+  if(o&&o.e==n.e&&o.p==n.p&&o.a==n.a&&o.pv==n.pv)return false;
+  f.push[dev]=n;return true;
+}
+const kindWord=t=>t=='img'?'photo':t=='video'?'video':t=='audio'?'voice note':'message';
+/* sender side: nudge each of the friend's devices that is not already connected to us */
+async function pushNotify(f,m){
+  if(!f||!f.push||!mbUrl)return;
+  for(const dev of Object.keys(f.push)){
+    if(conns[dev]&&conns[dev].open&&conns[dev].role=='friend')continue;
+    const s=f.push[dev],pv=s.pv||'name';
+    const obj=pv=='none'?{t:'Skein',b:'New message',g:'sk'}:{t:myName,b:pv=='full'?(m.t=='text'?String(m.text||'').slice(0,100):'Sent a '+kindWord(m.t)):'New message',g:myAcct};
+    const res=await pushSend(s,obj).catch(()=>'failed');
+    if(res===404||res===410){delete f.push[dev];await putFriend(f)}
+  }
+}
+/* receiver side while the app is running in the background */
+async function notifyLocal(f,m){
+  try{
+    if(typeof Notification=='undefined'||Notification.permission!='granted'||!f)return;
+    if(!document.hidden&&(!document.hasFocus||document.hasFocus()))return;
+    const pv=pushPv(),title=pv=='none'?'Skein':dn(f),body=pv=='full'?(m.t=='text'?String(m.text||'').slice(0,100):'Sent a '+kindWord(m.t)):'New message';
+    const o={body,tag:pv=='none'?'sk':f.id,renotify:true};if(location.protocol.startsWith('http'))o.icon='icon-192.png';
+    const reg=navigator.serviceWorker&&navigator.serviceWorker.getRegistration&&await navigator.serviceWorker.getRegistration();
+    if(reg)await reg.showNotification(title,o);else new Notification(title,o);
+  }catch(e){}
+}
+function pushPublish(){
+  friendsRehi();
+  if(!mbUrl||!myPriv)return;
+  const s=pushShare();
+  Object.values(friends).forEach(f=>{mbDeposit(f.id,f.devs||[f.id],{kind:'sub',dev:myId,sub:s||0},null).catch(()=>{})});
+}
+const pushCan=()=>'serviceWorker' in navigator&&'PushManager' in window&&typeof Notification!='undefined'&&location.protocol.startsWith('http');
+const isIos=()=>/iPhone|iPad|iPod/i.test(navigator.userAgent||'');
+const standalone=()=>!!navigator.standalone||(matchMedia&&matchMedia('(display-mode: standalone)').matches);
+async function pushEnable(){
+  if(typeof Notification=='undefined')return{ok:false,msg:'This device or browser can’t show notifications.'};
+  let perm=Notification.permission;if(perm=='default')perm=await Notification.requestPermission();
+  if(perm!='granted')return{ok:false,msg:'Notifications are blocked. '+pushHelp()};
+  if(!pushCan())return{ok:true,local:true,msg:'On while Skein is running.'};
+  if(isIos()&&!standalone())return{ok:false,msg:'On iPhone, open Skein from its Home Screen icon first, then turn this on.'};
+  try{
+    const reg=await navigator.serviceWorker.ready;let sub=await reg.pushManager.getSubscription();
+    if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:unb64u(VAPID_PUB)});
+    const j=sub.toJSON();if(!j.endpoint||!j.keys)throw new Error('no keys');
+    localStorage.setItem('sk_push',JSON.stringify({e:j.endpoint,p:j.keys.p256dh,a:j.keys.auth,ts:Date.now()}));
+    pushPublish();return{ok:true,msg:'On.'};
+  }catch(e){return{ok:false,msg:'Couldn’t turn on push: '+String(e&&e.message||e).slice(0,80)}}
+}
+function pushHelp(){
+  const u=navigator.userAgent||'';
+  return isIos()?'iPhone: open Settings, find Skein (or Notifications), and allow notifications.':/Android/i.test(u)?'Android: tap the lock icon in your browser, open Site settings, and allow Notifications.':/Windows/i.test(u)?'Windows: open Settings, System, Notifications, and allow Skein.':/Mac/i.test(u)?'Mac: open System Settings, Notifications, and allow Skein.':'Allow notifications for Skein in your system or browser settings.';
+}
+/* keep the saved subscription current, and tell friends if it changed */
+async function pushRefresh(){
+  try{
+    if(!pushCan()||Notification.permission!='granted')return;
+    const reg=await navigator.serviceWorker.ready,sub=await reg.pushManager.getSubscription();if(!sub)return;
+    const j=sub.toJSON(),old=pushLoad();
+    if(!old||old.e!=j.endpoint||old.p!=j.keys.p256dh||old.a!=j.keys.auth){localStorage.setItem('sk_push',JSON.stringify({e:j.endpoint,p:j.keys.p256dh,a:j.keys.auth,ts:Date.now()}));pushPublish()}
+  }catch(e){}
+}
+async function renderPush(){
+  const st=$('pnSt');if(!st)return;
+  [['pnN','name'],['pnP','full'],['pnG','none']].forEach(([i,v])=>$(i).classList.toggle('sel',pushPv()==v));
+  const perm=typeof Notification=='undefined'?'unsupported':Notification.permission,mine=pushLoad();
+  let t,help='';
+  if(perm=='unsupported')t='This device or browser can’t show notifications.';
+  else if(perm=='denied'){t='Blocked.';help=pushHelp()}
+  else if(perm=='granted'&&mine)t='On. You’ll get notifications even when Skein is closed.';
+  else if(perm=='granted')t=pushCan()?(isIos()&&!standalone()?'Open Skein from its Home Screen icon to turn this on.':'Allowed, but not set up yet. Tap the button.'):'On while Skein is running.';
+  else t=isIos()&&!standalone()?'On iPhone, open Skein from its Home Screen icon first.':'Off.';
+  st.textContent=t;$('pnGo').style.display=perm=='granted'&&(mine||!pushCan())?'none':'';
+  $('pnTest').style.display=mine?'':'none';
+  if(mine&&mbUrl){try{mbInfo=mbInfo||await mbCall({a:'ping'})}catch(e){mbInfo=null}if(mbInfo&&mbInfo.ok&&!mbInfo.relay)help='One-time step: update your mailbox script so it can forward notifications. See mailbox/README.txt.'}
+  else if(mine&&!mbUrl)help='Turn on the offline mailbox below so friends can notify you.';
+  $('pnHelp').textContent=help;
+}
+$('pnGo').onclick=async()=>{const r=await pushEnable();toast(r.msg);renderPush()};
+[['pnN','name'],['pnP','full'],['pnG','none']].forEach(([i,v])=>{$(i).onclick=()=>{try{localStorage.setItem('sk_pushpv',v)}catch(e){}renderPush();if(pushLoad())pushPublish()}});
+$('pnTest').onclick=async()=>{
+  const s=pushShare();if(!s)return;toast('Sending a test…');
+  const r=await pushSend(s,{t:'Skein',b:'Test notification. It works!',g:'test'}).catch(e=>String(e&&e.message||e));
+  toast(r===201||r===200?'Sent. It should appear in a moment.':r==='old script'?'Your mailbox script needs the one-time update first.':r===404||r===410?'That device’s subscription expired. Turn notifications off and on again.':'Didn’t work ('+r+').');
+};
+try{if(navigator.serviceWorker)navigator.serviceWorker.addEventListener('message',e=>{const g=e.data&&e.data.open;if(g&&friends[g]){cur=g;autoRead=true;render()}})}catch(e){}
 /* ---------- boot ---------- */
 (async()=>{
   const fs=await tx('friends','readonly',s=>s.getAll());fs.forEach(f=>friends[f.id]=f);{const last=localStorage.getItem('sk_last');cur=fs.some(f=>f.id==last)?last:fs[0]&&fs[0].id}
@@ -1027,7 +1168,7 @@ setInterval(sweepExpired,3e5);
   if(typeof Peer=='undefined'){toast('Couldn’t load the connection library. Check your internet.');return}
   await initKeys();
   startPeer();
-  mbPull();
+  mbPull();pushRefresh();
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
   if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!navigator.standalone&&!matchMedia('(display-mode: standalone)').matches)$('ios').style.display='flex';
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)sweepExpired();if(document.hidden||!peer)return;if(peer.destroyed)startPeer();else if(peer.disconnected)peer.reconnect();connectAll();mbPull();mbOutbox()});

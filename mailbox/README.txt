@@ -34,3 +34,14 @@ Good to know
 - Anyone who has the link can drop in or collect encrypted messages, so share it only with
   people you chat with. Stopping it: Deploy > Manage deployments > Archive.
 - Apps Script has daily limits. A handful of friends is nowhere near them.
+
+
+UPDATING TO VERSION 2 (needed for notifications, one time only)
+---------------------------------------------------------------
+Notifications need the script to be able to pass a notification along.
+1. Open your script at script.google.com (Skein mailbox project).
+2. Select everything in Code.gs, delete it, and paste in the new Code.gs.
+3. Click Deploy > Manage deployments > the pencil (edit) icon.
+4. Under Version choose "New version", then click Deploy.
+   (If Google asks for permission to connect to an external service, allow it.)
+Your web address stays the same, so you and your friends change nothing else.
