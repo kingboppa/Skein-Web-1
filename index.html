@@ -66,7 +66,7 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
   <div class="strip" id="strip"></div>
   <div style="display:flex;align-items:center;border-bottom:1px solid var(--line)"><div class="stat" id="stat" style="flex:1;border-bottom:0"></div><button class="badge" id="bUn" style="display:none;border:0;cursor:pointer;margin-right:6px" aria-label="Jump to unread chat"></button><button class="badge" id="bFr" style="border:0;cursor:pointer;margin-right:10px;background:var(--them);color:var(--ink)" aria-label="Friend options">⋯</button></div>
   <div id="msgs"></div>
-  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.11.0</span></div>
+  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.12.0</span></div>
   <div id="rpBar"><div class="qt" id="rpTx"></div><button id="rpX" title="Cancel reply">✕</button></div>
   <div class="bar">
     <input type="file" id="pic" accept="image/*,video/*" hidden>
@@ -131,6 +131,10 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
   <button class="btn g" id="pnTest" style="display:none">Send a test notification</button>
   <div id="pnHelp" style="font-size:12px;color:var(--mute)"></div>
   <div style="font-size:12px;color:var(--mute)">“Name only” shows who messaged you. “Preview” also shows the text. “Generic” shows just “New message”. Notifications are encrypted from your friend’s device to yours, and the mailbox only passes them along.</div>
+  <hr style="width:100%;border:0;border-top:1px solid var(--line)">
+  <div style="font-size:14px;font-weight:600">Typing and last seen</div>
+  <div class="row" style="max-width:none"><button class="btn g" id="pvTy" style="flex:1"></button><button class="btn g" id="pvLs" style="flex:1"></button></div>
+  <div style="font-size:12px;color:var(--mute)">These work both ways: if you turn one off, you stop seeing it from your friends too. Neither is ever stored anywhere.</div>
   <hr style="width:100%;border:0;border-top:1px solid var(--line)">
   <div style="font-size:14px;font-weight:600">Disappearing chats</div>
   <div style="font-size:12px;color:var(--mute)">Messages are deleted from this device about 24 hours after you see them. Tap a message or photo to save it, and tap again to unsave. Saved items stay on this device only.</div>
@@ -243,7 +247,7 @@ const enc=s=>new TextEncoder().encode(s);
 async function signFor(dev){if(!myPriv)return null;return new Uint8Array(await SUB.sign(SIG,myPriv,enc(myId+'>'+dev)))}
 async function verifyFrom(jwk,sig,dev){try{const k=await SUB.importKey('jwk',{kty:jwk.kty,crv:jwk.crv,x:jwk.x,y:jwk.y},ALG,false,['verify']);return await SUB.verify(SIG,k,new Uint8Array(sig),enc(dev+'>'+myId))}catch(e){return false}}
 /* ---------- theme: auto / light / dark ---------- */
-const APP_VERSION='1.11.0';
+const APP_VERSION='1.12.0';
 function getTheme(){try{const t=localStorage.getItem('sk_theme');return t=='light'||t=='dark'?t:'auto'}catch(e){return'auto'}}
 function applyTheme(t){
   if(t=='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);
@@ -283,7 +287,7 @@ async function packMsg(m){
 }
 async function sibForward(m){if(sibConns().length)toSibs(await packMsg(m))}
 async function sendHi(c){
-  const p={k:'hi',name:myName,tz:myOff,acct:myAcct,devs:myDevs};if(mbUrl)p.mb=mbUrl;p.push=pushShare()||0;
+  const p={k:'hi',name:myName,tz:myOff,acct:myAcct,devs:myDevs};if(mbUrl)p.mb=mbUrl;p.push=pushShare()||0;p.pv=privWire();
   if(myPubJwk){const s=await signFor(c.peer);if(s){p.pub=myPubJwk;p.sig=s}}
   c.send(p);
 }
@@ -296,7 +300,7 @@ function setup(c,out){
     conns[c.peer]=c;sendHi(c).catch(()=>{});render();
   });
   c.on('data',d=>{dq=dq.then(()=>onData(c,d)).catch(e=>console.error('skein',e))});
-  c.on('close',()=>{if(conns[c.peer]===c){delete conns[c.peer];render();renderSettings()}});
+  c.on('close',()=>{if(conns[c.peer]===c){delete conns[c.peer];if(c.role=='friend'&&friends[c.acct]&&!friendConns(c.acct).length){const f=friends[c.acct];f.seen=Date.now();f.away=false;delete typing[f.id];putFriend(f)}render();renderSettings()}});
   c.on('error',()=>{});
 }
 async function onHi(c,d){
@@ -321,6 +325,7 @@ async function onHi(c,d){
   if(d.name&&f.name!=d.name){f.name=String(d.name).slice(0,30);ch=true}
   if(d.tz!=null&&f.tz!==d.tz){f.tz=d.tz;ch=true}
   if('push' in d&&pushStore(f,dev,d.push||null))ch=true;
+  if(d.pv&&typeof d.pv=='object'){const n={ty:d.pv.ty===0?0:1,ls:d.pv.ls===0?0:1};if(!f.pv||f.pv.ty!==n.ty||f.pv.ls!==n.ls){f.pv=n;ch=true}}
   if(ch)await putFriend(f);
   if(d.mb&&!mbUrl&&MB_RE.test(d.mb)&&f.mbAsked!==d.mb){f.mbAsked=d.mb;await putFriend(f);if(confirm(dn(f)+' uses an offline mailbox, so you can message each other even when one of you is offline. Use the same one? It only ever holds locked messages.'))setMailbox(d.mb)}
   const first=c.role!='friend';c.role='friend';c.acct=acct;
@@ -334,6 +339,8 @@ async function onData(c,d){
   if(c.role=='sib')return onSib(c,d);
   if(c.role!='friend')return;
   const id=c.acct;if(!friends[id])return;
+  if(d.k=='ty'){typing[id]=Date.now()+6000;setTimeout(()=>{if(id==cur)updStat()},6200);if(id==cur)updStat();return}
+  if(d.k=='ls'){const f=friends[id];f.away=!!d.away;f.seen=Date.now();putFriend(f);if(id==cur)updStat();return}
   if(d.k=='pz'){friends[id].theirPz=d.r;putFriend(friends[id]);render();return}
   if(d.k=='base'){const f=friends[id];if((f.base&&f.base.ts>=d.ts)||f.declined===d.ts)return;
     if(confirm(dn(f)+' says your streak is '+d.n+' day'+(d.n==1?'':'s')+'. Accept?'))f.base={n:d.n,ts:d.ts};else f.declined=d.ts;
@@ -341,6 +348,7 @@ async function onData(c,d){
   if(d.k=='rx'){if(await rxIncoming(id,d.u,'theirs',d.e,d.ts)){toSibs({k:'rx',f:id,u:d.u,w:'t',e:d.e,ts:d.ts});render()}return}
   if(d.k=='ack'){const ms=await msgsOf(id);const m=ms.find(x=>x.uid==d.uid);if(m){m.pend=false;await putMsg(m);if(id==cur)render()}return}
   if(d.k=='m'){
+    delete typing[id];
     const ms=await msgsOf(id);
     if(!ms.some(x=>x.uid==d.uid)){
       const m={f:id,me:false,read:false,t:d.t,uid:d.uid,once:d.once,ts:d.ts,secs:d.once&&d.t=='img'?Math.min(30,Math.max(0,+d.secs||0)):0};
@@ -660,7 +668,7 @@ function renderSettings(){
   const box=$('stDevs');box.innerHTML='';
   myDevs.forEach(d=>{const r=document.createElement('div');r.style.padding='3px 0';const on=d.id==myId||(conns[d.id]&&conns[d.id].open&&conns[d.id].role=='sib');r.textContent=(on?'🟢 ':'⚪ ')+d.l+(d.id==myId?' (this device)':'');box.appendChild(r)});
   $('lkNew').disabled=!myPriv;
-  refreshPerm();renderPush();
+  refreshPerm();renderPush();renderPriv();
   $('mbSt').textContent=!mbUrl?'Off. Messages only arrive while you are both online.':mbStat.ok===false?'Problem: '+mbStat.msg:mbStat.t?'On. Last checked '+new Date(mbStat.t).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'On. Checking…';
   $('mbRm').style.display=mbUrl?'':'none';$('mbSet').textContent=mbUrl?'Change link':'Set mailbox link';
   if(pendingLink&&Date.now()>pendingLink.exp)pendingLink=null;
@@ -799,7 +807,7 @@ async function setBase(id,n){
   friendConns(id).forEach(c=>c.send({k:'base',n,ts:f.base.ts}));await render();
 }
 function statText(f){
-  const s=info[f.id]||{n:0},p=[online(f)?dn(f)+' is online':dn(f)+' is offline. Messages send when you’re both online.'];
+  const s=info[f.id]||{n:0},seenTx=lsOn(f)&&f.seen?' (last seen '+agoText(f.seen)+')':'',live=online(f)&&!f.away,p=[typing[f.id]>Date.now()&&tyOn(f)?dn(f)+' is typing…':live?dn(f)+' is online':online(f)?dn(f)+' is away'+seenTx:dn(f)+' is offline'+seenTx+'. Messages send when you’re both online.'];
   if(s.n>0)p.push('🔥 '+s.n+'-day streak');
   const mine=isPaused(),theirs=(f.theirPz||[]).some(r=>r[0]<=Date.now()&&(r[1]==null||r[1]>Date.now()));
   if(mine||theirs)p.push('⏸ streaks paused'+(mine&&theirs?' by both of you':mine?' by you':' by '+dn(f)));
@@ -891,7 +899,7 @@ $('vwX').onclick=async()=>{clearInterval(vT);$('vwX').textContent='Close';
   if(viewing){const m=viewing;viewing=null;m.done=true;m.blob=null;if(urls[m.id]){URL.revokeObjectURL(urls[m.id]);delete urls[m.id]}await putMsg(m);toSibs({k:'done',f:m.f,uid:m.uid})}
   render();
 };
-function send(){const v=$('txt').value.trim();if(!v)return;$('txt').value='';sendMsg('text',v)}
+function send(){const v=$('txt').value.trim();if(!v)return;$('txt').value='';lastTy=0;sendMsg('text',v)}
 $('bSend').onclick=send;$('txt').onkeydown=e=>{if(e.key=='Enter')send()};
 /* photo with caption */
 let img=null,capY=380,drag=false,strokes=[],drawMode=false;
@@ -1106,6 +1114,30 @@ async function rxIncoming(fid,uid,side,e,ts){
   if(!rxApply(m,side,e,ts))return false;
   await putMsg(m);return true;
 }
+/* ---------- typing indicator and last seen: only ever sent over a live connection, never stored in the mailbox ---------- */
+const privGet=()=>{let o={};try{o=JSON.parse(localStorage.getItem('sk_priv')||'{}')||{}}catch(e){}return{ty:o.ty!==0,ls:o.ls!==0}};
+const privSet=(k,v)=>{const o=privGet();o[k]=v;try{localStorage.setItem('sk_priv',JSON.stringify({ty:o.ty?1:0,ls:o.ls?1:0}))}catch(e){}};
+const privWire=()=>{const p=privGet();return{ty:p.ty?1:0,ls:p.ls?1:0}};
+const typing={};let lastTy=0;
+const updStat=()=>{const f=friends[cur];if(f)$('stat').textContent=statText(f)};
+const agoText=t=>{const s=Math.max(0,(Date.now()-t)/1000);return s<60?'just now':s<3600?Math.floor(s/60)+' min ago':s<86400?Math.floor(s/3600)+' hr ago':new Date(t).toLocaleDateString()};
+const lsOn=f=>privGet().ls&&!(f.pv&&f.pv.ls===0);
+const tyOn=f=>privGet().ty&&!(f.pv&&f.pv.ty===0);
+function tellFriends(p){Object.values(friends).forEach(f=>friendConns(f.id).forEach(c=>{try{c.send(p)}catch(e){}}))}
+$('txt').addEventListener('input',()=>{
+  const f=friends[cur];if(!f||!privGet().ty||!$('txt').value)return;
+  const n=Date.now();if(n-lastTy<2500)return;lastTy=n;
+  friendConns(f.id).forEach(c=>{try{c.send({k:'ty'})}catch(e){}});
+});
+document.addEventListener('visibilitychange',()=>{if(privGet().ls)tellFriends({k:'ls',away:!!document.hidden})});
+function renderPriv(){
+  const p=privGet();
+  if(!$('pvTy'))return;
+  $('pvTy').textContent='Typing indicator: '+(p.ty?'On':'Off');$('pvTy').classList.toggle('sel',p.ty);
+  $('pvLs').textContent='Last seen: '+(p.ls?'On':'Off');$('pvLs').classList.toggle('sel',p.ls);
+}
+$('pvTy').onclick=()=>{privSet('ty',!privGet().ty);renderPriv();friendsRehi()};
+$('pvLs').onclick=()=>{privSet('ls',!privGet().ls);renderPriv();friendsRehi()};
 /* ---------- notifications: web push is signed and encrypted on the sender's device and only forwarded by the mailbox script ---------- */
 const VAPID_PUB='BE1-EHR3YRoR2rC-WI2RmmdqPczRRKBhTwE_qxSjMpfWvEIJ1h_njGrKo6Ejc85ht2vE54D2sU24A_yzpJDqq7w',VAPID_SUB='https://kingboppa.github.io/Skein-Web-1/';
 const VAPID_JWK={"kty":"EC","crv":"P-256","x":"TX4QdHdhGhHasL5YjZGaZ2o9zNFEoGFPAT-rFKMyl9Y","y":"vEIJ1h_njGrKo6Ejc85ht2vE54D2sU24A_yzpJDqq7w","d":"KmFt49wFKHXJ_Z_XECFAQ_aIpLaSWXYC_hDmKj2rSGA"};   /* one shared app key: it only lets a device send notifications, never read anything */
