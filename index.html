@@ -983,8 +983,8 @@ async function renderNow(lazy){const _i={},_u={};let skipped=false;await Promise
 }
 
 /* ---------- add to home screen ---------- */
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();instEv=e;instUi()});
-window.addEventListener('appinstalled',()=>{instEv=null;toast('Skein was added to your Home Screen');instUi()});
+if(window.addEventListener){window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();instEv=e;instUi()});
+window.addEventListener('appinstalled',()=>{instEv=null;toast('Skein was added to your Home Screen');instUi()})}
 function instUi(){
   const b=$('instBox');if(!b)return;
   const ios=/iPhone|iPad|iPod/i.test(navigator.userAgent||'');if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){b.style.display='none';return}
