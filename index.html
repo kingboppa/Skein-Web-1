@@ -66,7 +66,7 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
   <div class="strip" id="strip"></div>
   <div style="display:flex;align-items:center;border-bottom:1px solid var(--line)"><div class="stat" id="stat" style="flex:1;border-bottom:0"></div><button class="badge" id="bUn" style="display:none;border:0;cursor:pointer;margin-right:6px" aria-label="Jump to unread chat"></button><button class="badge" id="bFr" style="border:0;cursor:pointer;margin-right:10px;background:var(--them);color:var(--ink)" aria-label="Friend options">⋯</button></div>
   <div id="msgs"></div>
-  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.16.0</span></div>
+  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.16.1</span></div>
   <div id="rpBar"><div class="qt" id="rpTx"></div><button id="rpX" title="Cancel reply">✕</button></div>
   <div class="bar">
     <input type="file" id="pic" accept="image/*,video/*" hidden>
@@ -178,6 +178,10 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
   <button class="btn g" id="foX">Close</button>
 </div></div>
 <div id="mnu"></div>
+<div class="modal" id="cf" style="z-index:99"><div style="background:var(--surface);color:var(--ink);padding:18px;border-radius:16px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:12px">
+  <div id="cfT" style="font-size:15px;white-space:pre-wrap"></div>
+  <div class="row" style="max-width:none"><button class="btn g" id="cfNo">No</button><button class="btn" id="cfOk" style="flex:1">Yes</button></div>
+</div></div>
 <div class="modal" id="grp"><div style="background:var(--surface);color:var(--ink);padding:18px;border-radius:16px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:10px">
   <h3 style="margin:0">New group</h3>
   <input type="text" id="grpN" placeholder="Group name" maxlength="40" autocomplete="off" style="padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:16px">
@@ -214,6 +218,18 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
 <script>
 const $=id=>document.getElementById(id);
 const toast=t=>{const e=$('toast');e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',3000)};
+/* our own yes/no box: the system pop-up leaves the typing box unclickable on Windows */
+let cfQ=Promise.resolve();
+function confirmAsk(msg,yes,no){
+  if(window.skeinConfirm)return Promise.resolve(window.skeinConfirm(msg));
+  const run=()=>new Promise(res=>{
+    $('cfT').textContent=msg;$('cfOk').textContent=yes||'Yes';$('cfNo').textContent=no||'No';$('cf').classList.add('show');
+    const done=v=>{$('cf').classList.remove('show');$('cfOk').onclick=$('cfNo').onclick=null;document.removeEventListener('keydown',kd,true);res(v)};
+    const kd=e=>{if(e.key=='Escape'){e.preventDefault();done(false)}};document.addEventListener('keydown',kd,true);
+    $('cfOk').onclick=()=>done(true);$('cfNo').onclick=()=>done(false);setTimeout(()=>$('cfOk').focus(),30);
+  });
+  const p=cfQ.then(run);cfQ=p.catch(()=>{});return p;
+}
 function askText(title,def){return new Promise(res=>{
   const i=$('askI');$('askT').textContent=title;i.value=def||'';$('ask').classList.add('show');setTimeout(()=>{i.focus();i.select()},60);
   const done=v=>{$('ask').classList.remove('show');$('askOk').onclick=$('askX').onclick=i.onkeydown=null;res(v)};
@@ -264,7 +280,7 @@ const enc=s=>new TextEncoder().encode(s);
 async function signFor(dev){if(!myPriv)return null;return new Uint8Array(await SUB.sign(SIG,myPriv,enc(myId+'>'+dev)))}
 async function verifyFrom(jwk,sig,dev){try{const k=await SUB.importKey('jwk',{kty:jwk.kty,crv:jwk.crv,x:jwk.x,y:jwk.y},ALG,false,['verify']);return await SUB.verify(SIG,k,new Uint8Array(sig),enc(dev+'>'+myId))}catch(e){return false}}
 /* ---------- theme: auto / light / dark ---------- */
-const APP_VERSION='1.16.0';
+const APP_VERSION='1.16.1';
 function getTheme(){try{const t=localStorage.getItem('sk_theme');return t=='light'||t=='dark'?t:'auto'}catch(e){return'auto'}}
 function applyTheme(t){
   if(t=='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);
@@ -332,7 +348,7 @@ async function onHi(c,d){
   if(f&&f.pub){if(!(signed&&ok&&pubStr(d.pub)==f.pub)){c.close();return}}
   else if(signed&&!ok){c.close();return}
   if(!f){
-    if(!confirm(String(d.name||'Someone').slice(0,30)+' wants to chat with you. Accept?')){c.close();return}
+    if(!(await confirmAsk(String(d.name||'Someone').slice(0,30)+' wants to chat with you. Accept?','Accept','Decline'))){c.close();return}
     await addFriend(acct,String(d.name||acct).slice(0,30),0,(d.devs||[]).map(x=>x.id));f=friends[acct];
   }
   let ch=false;
@@ -344,7 +360,7 @@ async function onHi(c,d){
   if('push' in d&&pushStore(f,dev,d.push||null))ch=true;
   if(d.pv&&typeof d.pv=='object'){const n={ty:d.pv.ty===0?0:1,ls:d.pv.ls===0?0:1};if(!f.pv||f.pv.ty!==n.ty||f.pv.ls!==n.ls){f.pv=n;ch=true}}
   if(ch)await putFriend(f);
-  if(d.mb&&!mbUrl&&MB_RE.test(d.mb)&&f.mbAsked!==d.mb){f.mbAsked=d.mb;await putFriend(f);if(confirm(dn(f)+' uses an offline mailbox, so you can message each other even when one of you is offline. Use the same one? It only ever holds locked messages.'))setMailbox(d.mb)}
+  if(d.mb&&!mbUrl&&MB_RE.test(d.mb)&&f.mbAsked!==d.mb){f.mbAsked=d.mb;await putFriend(f);if(await confirmAsk(dn(f)+' uses an offline mailbox, so you can message each other even when one of you is offline. Use the same one? It only ever holds locked messages.'))setMailbox(d.mb)}
   const first=c.role!='friend';c.role='friend';c.acct=acct;
   if(first){c.send({k:'pz',r:myPz});if(f.base)c.send({k:'base',n:f.base.n,ts:f.base.ts});flush(acct);resendCtl(acct,c).catch(()=>{});gsync(c,acct)}
   render();
@@ -364,7 +380,7 @@ async function onData(c,d){
   if(d.k=='ls'){const f=friends[id];f.away=!!d.away;f.seen=Date.now();putFriend(f);if(id==cur)updStat();return}
   if(d.k=='pz'){friends[id].theirPz=d.r;putFriend(friends[id]);render();return}
   if(d.k=='base'){const f=friends[id];if((f.base&&f.base.ts>=d.ts)||f.declined===d.ts)return;
-    if(confirm(dn(f)+' says your streak is '+d.n+' day'+(d.n==1?'':'s')+'. Accept?'))f.base={n:d.n,ts:d.ts};else f.declined=d.ts;
+    if(await confirmAsk(dn(f)+' says your streak is '+d.n+' day'+(d.n==1?'':'s')+'. Accept?'))f.base={n:d.n,ts:d.ts};else f.declined=d.ts;
     await putFriend(f);toSibs({k:'fr',list:[frPack(f)]});render();return}
   if(d.k=='rx'){const fid=gFor(d.g,id);if(!fid)return;const gs=!!d.g,side=gs?'u:'+id:'theirs';if(await rxIncoming(fid,d.u,side,d.e,d.ts)){toSibs({k:'rx',f:fid,u:d.u,w:gs?side:'t',e:d.e,ts:d.ts});render()}return}
   if(d.k=='ack'){const fid=gFor(d.g,id);if(!fid)return;const m=(await msgsOf(fid)).find(x=>x.uid==d.uid&&x.me);if(m){ackMsg(m,id);await putMsg(m);if(fid==cur)render()}return}
@@ -638,7 +654,7 @@ async function onLink(c,d){
   }
   pendingLink=null;renderSettings();
   const key=JSON.parse(localStorage.getItem('sk_key')||'null');
-  if(!key||!confirm('Link “'+String(d.label||'a device').slice(0,30)+'” to your account? It will get your account key and all your chats.')){c.send({k:'linkno'});return}
+  if(!key||!(await confirmAsk('Link “'+String(d.label||'a device').slice(0,30)+'” to your account? It will get your account key and all your chats.'))){c.send({k:'linkno'});return}
   mergeDevs([{id:d.dev,l:d.label}]);
   c.send({k:'linkok',acct:myAcct,name:myName,key,devs:myDevs,pz:myPz,pzts:+localStorage.getItem('sk_pzts')||0});
   renderSettings();
@@ -764,12 +780,12 @@ async function upDownload(){
   catch(e){up={stage:'failed',msg:'Download failed.'}}
   renderUp();
 }
-$('upGo').onclick=()=>{
+$('upGo').onclick=async()=>{
   if(up.stage=='available')upDownload();
-  else if(up.stage=='ready'){if(confirm('Skein will reload now. Your chats and friends are kept. Continue?'))SD.apply()}
+  else if(up.stage=='ready'){if(await confirmAsk('Skein will reload now. Your chats and friends are kept. Continue?','Reload'))SD.apply()}
   else upCheck();
 };
-$('upReset').onclick=async()=>{if(confirm('Go back to the version that came with the installer? Your chats and friends are kept.'))SD.reset()};
+$('upReset').onclick=async()=>{if(await confirmAsk('Go back to the version that came with the installer? Your chats and friends are kept.'))SD.reset()};
 if(SD){SD.info().then(i=>{upInfo=i;renderUp()}).catch(()=>{});setTimeout(upCheck,6000);setInterval(upCheck,6*36e5)}
 $('bSet').onclick=()=>{$('st').classList.add('show');renderSettings();renderUp()};
 $('stX').onclick=()=>$('st').classList.remove('show');
@@ -788,7 +804,7 @@ $('mbSet').onclick=async()=>{
   setMailbox(u);
   try{const r=await mbCall({a:'ping'});toast(r&&r.ok?'Mailbox connected':'That link didn’t answer like a Skein mailbox')}catch(e){toast('Couldn’t reach that link. Check it and your internet.')}
 };
-$('mbRm').onclick=()=>{if(confirm('Turn off the offline mailbox on all your devices?'))setMailbox('')};
+$('mbRm').onclick=async()=>{if(await confirmAsk('Turn off the offline mailbox on all your devices?'))setMailbox('')};
 $('lkNew').onclick=()=>{pendingLink={s:rid(8),exp:Date.now()+6e5,tries:0};$('lkCode').value=myId+'~'+pendingLink.s;renderSettings()};
 $('lkCopy').onclick=async()=>{if(await copyText($('lkCode').value))toast('Link code copied');else{$('lkCode').select()}};
 $('lkUse').onclick=()=>startLink();
@@ -1159,7 +1175,7 @@ const msgActions=[
   {label:'↩ Reply',show:m=>!m.gone&&!m.unsent,run:m=>setReply(m)},
   {label:'📋 Copy',show:m=>m.t=='text'&&!m.unsent,run:async m=>{toast(await copyText(m.text)?'Copied':'Couldn’t copy')}},
   {label:'✏️ Edit',show:m=>m.me&&m.t=='text'&&!m.unsent&&Date.now()-m.ts<EDIT_MS,run:async m=>{const v=await askText('Edit message',m.text);if(v!==null&&v.trim())editMsg(m,v)}},
-  {label:'🗑 Unsend',show:m=>m.me&&!m.unsent,run:m=>{if(confirm('Unsend this message? It will disappear for '+dn(friends[m.f]||{})+' too. If they already saw it, they have seen it.'))unsendMsg(m)}}
+  {label:'🗑 Unsend',show:m=>m.me&&!m.unsent,run:async m=>{if(await confirmAsk('Unsend this message? It will disappear for '+dn(friends[m.f]||{})+' too. If they already saw it, they have seen it.','Unsend','Cancel'))unsendMsg(m)}}
 ];
 function closeMenu(){$('mnu').classList.remove('show')}
 function openMenu(m,x,y){
@@ -1399,7 +1415,7 @@ async function gapply(w,from){
   const name=String(w.name||'Group').slice(0,40);
   if(!g){
     const names=mem.filter(a=>a!=myAcct).map(a=>dn(friends[a]));
-    if(!confirm((friends[from]?dn(friends[from]):'Someone')+' added you to the group “'+name+'” with '+names.join(', ')+'. Join?')){try{localStorage.setItem('sk_gdecl',JSON.stringify(gDecl().concat(w.id).slice(-50)))}catch(e){}return false}
+    if(!(await confirmAsk((friends[from]?dn(friends[from]):'Someone')+' added you to the group “'+name+'” with '+names.join(', ')+'. Join?','Join','No thanks'))){try{localStorage.setItem('sk_gdecl',JSON.stringify(gDecl().concat(w.id).slice(-50)))}catch(e){}return false}
     g={id:w.id,name,e:'👥',grp:true,owner:String(w.owner||from).slice(0,64),members:mem,ver,left:false};
     friends[g.id]=g;if(!cur)cur=g.id;
   }else{g.name=name;g.members=mem;g.ver=ver;g.left=!mem.includes(myAcct)}
@@ -1444,7 +1460,7 @@ $('grpX').onclick=()=>$('grp').classList.remove('show');
 $('grpGo').onclick=async()=>{const g=await createGroup($('grpN').value.trim()||'Group',[...grpSel]);$('grp').classList.remove('show');if(!g)toast('Pick at least two friends')};
 $('foLeave').onclick=async()=>{
   const g=friends[cur];if(!isGrp(g)||g.left)return;
-  if(!confirm('Leave “'+g.name+'”? You will stop getting its messages. Your history stays on this device.'))return;
+  if(!(await confirmAsk('Leave “'+g.name+'”? You will stop getting its messages. Your history stays on this device.','Leave')))return;
   $('fo').classList.remove('show');await leaveGroup(g);
 };
 function showMenuItems(items,x,y){
