@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Skein</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2064%2064%22%20width%3D%2264%22%20height%3D%2264%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2216%22%20fill%3D%22%231f1b3d%22/%3E%3Cg%20fill%3D%22none%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%3E%3Cpath%20d%3D%22M9%2038C14%2010%2044%206%2052%2024C58%2038%2034%2058%2024%2040C18%2027%2040%2018%2055%2044%22%20stroke%3D%22%23ff6b6b%22/%3E%3Cpath%20d%3D%22M12%2052C8%2024%2030%2012%2040%2028C48%2042%2022%2050%2020%2032C19%2022%2036%2010%2054%2016%22%20stroke%3D%22%232dd4bf%22/%3E%3Cpath%20d%3D%22M8%2022C22%2036%2030%2060%2046%2050C58%2044%2056%2022%2040%2022C26%2022%2022%2044%2044%2056%22%20stroke%3D%22%23c4b5fd%22/%3E%3C/g%3E%3Cg%20fill%3D%22%23fff%22%20stroke%3D%22%231f1b3d%22%20stroke-width%3D%221.4%22%3E%3Ccircle%20cx%3D%229%22%20cy%3D%2238%22%20r%3D%223%22/%3E%3Ccircle%20cx%3D%2255%22%20cy%3D%2244%22%20r%3D%223%22/%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2252%22%20r%3D%223%22/%3E%3Ccircle%20cx%3D%2254%22%20cy%3D%2216%22%20r%3D%223%22/%3E%3Ccircle%20cx%3D%228%22%20cy%3D%2222%22%20r%3D%223%22/%3E%3Ccircle%20cx%3D%2244%22%20cy%3D%2256%22%20r%3D%223%22/%3E%3C/g%3E%3C/svg%3E">
-<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script async src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
 :root{--bg:#fff7f8;--surface:#fff;--ink:#1a1a1a;--mute:#6b6b6b;--accent:#e11d48;--on:#fff;--me:#ffe1e6;--them:#eee;--line:#f0d9dd;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121212;--surface:#1c1c1c;--ink:#f2f2f2;--mute:#9a9a9a;--me:#7a1f31;--them:#2a2a2a;--line:#3a3033}}
@@ -66,7 +66,7 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
   <div class="strip" id="strip"></div>
   <div style="display:flex;align-items:center;border-bottom:1px solid var(--line)"><div class="stat" id="stat" style="flex:1;border-bottom:0"></div><button class="badge" id="bUn" style="display:none;border:0;cursor:pointer;margin-right:6px" aria-label="Jump to unread chat"></button><button class="badge" id="bFr" style="border:0;cursor:pointer;margin-right:10px;background:var(--them);color:var(--ink)" aria-label="Friend options">⋯</button></div>
   <div id="msgs"></div>
-  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.15.0</span></div>
+  <div class="opt"><label><input type="checkbox" id="once" checked> Send photos &amp; videos as view-once</label><span id="ver" style="float:right;opacity:.7">v1.16.0</span></div>
   <div id="rpBar"><div class="qt" id="rpTx"></div><button id="rpX" title="Cancel reply">✕</button></div>
   <div class="bar">
     <input type="file" id="pic" accept="image/*,video/*" hidden>
@@ -229,7 +229,11 @@ async function copyText(t){
 const DB=new Promise((ok,no)=>{const r=indexedDB.open('skein',2);r.onblocked=()=>toast('Close any other open Skein windows to finish updating.');r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains('friends'))d.createObjectStore('friends',{keyPath:'id'});if(!d.objectStoreNames.contains('msgs'))d.createObjectStore('msgs',{keyPath:'id',autoIncrement:true}).createIndex('f','f');if(!d.objectStoreNames.contains('prefs'))d.createObjectStore('prefs',{keyPath:'k'})};r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
 const tx=(s,m,fn)=>DB.then(d=>new Promise((ok,no)=>{const t=d.transaction(s,m),q=fn(t.objectStore(s));t.oncomplete=()=>ok(q&&q.result);t.onerror=()=>no(t.error)}));
 const msgsOf=f=>tx('msgs','readonly',s=>s.index('f').getAll(f));
-const putMsg=m=>tx('msgs','readwrite',s=>s.put(m));
+const msgsRecent=(f,n)=>{
+  if(typeof IDBKeyRange=='undefined')return msgsOf(f).then(a=>a.slice(-n));
+  return DB.then(d=>new Promise((ok,no)=>{const out=[],c=d.transaction('msgs','readonly').objectStore('msgs').index('f').openCursor(IDBKeyRange.only(f),'prev');c.onsuccess=()=>{const r=c.result;if(r&&out.length<n){out.push(r.value);r.continue()}else ok(out.reverse())};c.onerror=()=>no(c.error)}));
+};
+const putMsg=m=>{sumCache.delete(m.f);sumBump(m.f);return tx('msgs','readwrite',s=>s.put(m)).then(r=>{sumCache.delete(m.f);sumBump(m.f);return r})};
 const putFriend=f=>tx('friends','readwrite',s=>s.put(f));
 const getPref=k=>tx('prefs','readonly',s=>s.get(k));
 const putPref=(k,blob)=>tx('prefs','readwrite',s=>s.put({k,blob}));
@@ -260,7 +264,7 @@ const enc=s=>new TextEncoder().encode(s);
 async function signFor(dev){if(!myPriv)return null;return new Uint8Array(await SUB.sign(SIG,myPriv,enc(myId+'>'+dev)))}
 async function verifyFrom(jwk,sig,dev){try{const k=await SUB.importKey('jwk',{kty:jwk.kty,crv:jwk.crv,x:jwk.x,y:jwk.y},ALG,false,['verify']);return await SUB.verify(SIG,k,new Uint8Array(sig),enc(dev+'>'+myId))}catch(e){return false}}
 /* ---------- theme: auto / light / dark ---------- */
-const APP_VERSION='1.15.0';
+const APP_VERSION='1.16.0';
 function getTheme(){try{const t=localStorage.getItem('sk_theme');return t=='light'||t=='dark'?t:'auto'}catch(e){return'auto'}}
 function applyTheme(t){
   if(t=='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);
@@ -347,6 +351,8 @@ async function onHi(c,d){
 }
 async function onData(c,d){
   if(!d||typeof d!='object')return;
+  if(d.k=='pp'){try{c.send({k:'pq'})}catch(e){}return}
+  if(d.k=='pq'){c.alive=Date.now();return}
   if(d.k=='link')return onLink(c,d);
   if(d.k=='hi')return onHi(c,d);
   if(c.role=='sib')return onSib(c,d);
@@ -391,8 +397,8 @@ const ECDH={name:'ECDH',namedCurve:'P-256'};
 async function mbTok(){const k=JSON.parse(localStorage.getItem('sk_key')||'null');if(!k||!k.priv||!k.priv.d)return null;return b64(new Uint8Array(await SUB.digest('SHA-256',enc('skein-mb-v1|'+myId+'|'+k.priv.d)))).replace(/=+$/,'')}
 async function mbCall(o){
   if(!mbUrl)throw new Error('no mailbox set');
-  const ac=new AbortController(),to=setTimeout(()=>ac.abort(),60000);
-  try{const r=await fetch(mbUrl,{method:'POST',body:JSON.stringify(o),redirect:'follow',signal:ac.signal});return await r.json()}finally{clearTimeout(to)}
+  const ac=new AbortController(),to=setTimeout(()=>ac.abort(),60000);ac.t0=Date.now();mbLive.add(ac);
+  try{const r=await fetch(mbUrl,{method:'POST',body:JSON.stringify(o),redirect:'follow',signal:ac.signal});return await r.json()}finally{clearTimeout(to);mbLive.delete(ac)}
 }
 const cat=(...a)=>{const o=new Uint8Array(a.reduce((n,x)=>n+x.length,0));let p=0;a.forEach(x=>{o.set(x,p);p+=x.length});return o};
 /* locked with the recipient's public key, signed with mine; the mailbox only ever sees scrambled bytes */
@@ -470,22 +476,31 @@ async function mbDeposit(toAcct,devs,hdr,data){
   if(!r||!r.ok)return r&&r.err=='bad message'?'big':null;
   return devs.filter(d=>!to.includes(d)||(r.miss||[]).includes(d));
 }
-async function mbPull(){
-  if(!mbUrl||mbBusy||!myPriv)return;mbBusy=true;
+const mbLive=new Set();let mbGen=0;
+const mbAbortOld=ms=>{const n=Date.now();mbLive.forEach(ac=>{if(n-ac.t0>ms)ac.abort()})};
+async function mbPull(force){
+  if(!mbUrl||!myPriv)return;if(mbBusy&&force!==true)return;
+  const gen=++mbGen;mbBusy=true;
   try{
     const tok=await mbTok(),r=await mbCall({a:'list',dev:myId,tok});
     if(!r||!r.ok)throw new Error(r&&r.err||'no answer');
-    for(const it of r.items||[]){
-      if(mbSkip.has(it.id))continue;
-      const g=await mbCall({a:'get',dev:myId,tok,id:it.id});
-      if(!g||!g.ok){if(g&&g.err=='gone')continue;throw new Error(g&&g.err||'no answer')}
-      let res='bad';try{res=await inQ(()=>mbHandle(g.body))}catch(e){console.error('skein mailbox',e)}
-      await mbCall({a:'del',dev:myId,tok,id:it.id});
+    const items=(r.items||[]).filter(it=>!mbSkip.has(it.id));
+    for(let i=0;i<items.length;i+=4){
+      if(gen!=mbGen)return;
+      const batch=items.slice(i,i+4);
+      const gs=await Promise.all(batch.map(it=>mbCall({a:'get',dev:myId,tok,id:it.id}).catch(e=>({ok:false,err:'net',e}))));
+      const dels=[];
+      for(let j=0;j<batch.length;j++){
+        const g=gs[j];
+        if(!g||!g.ok){if(g&&g.err=='gone')continue;throw (g&&g.e)||new Error(g&&g.err||'no answer')}
+        try{await inQ(()=>mbHandle(g.body))}catch(e){console.error('skein mailbox',e)}
+        dels.push(mbCall({a:'del',dev:myId,tok,id:batch[j].id}).catch(()=>{}));
+      }
+      await Promise.all(dels);
     }
-    mbStat={t:Date.now(),ok:true,msg:''};
-    if(r.more)setTimeout(mbPull,300);
-  }catch(e){mbStat={t:Date.now(),ok:false,msg:e&&e.name=='AbortError'?'took too long':String(e&&e.message||e).slice(0,80)}}
-  finally{mbBusy=false;renderSettings()}
+    if(gen==mbGen){mbStat={t:Date.now(),ok:true,msg:''};if(r.more)setTimeout(mbPull,300)}
+  }catch(e){if(gen==mbGen)mbStat={t:Date.now(),ok:false,msg:e&&e.name=='AbortError'?'took too long':String(e&&e.message||e).slice(0,80)}}
+  finally{if(gen==mbGen){mbBusy=false;renderSettings()}}
 }
 const mbMark=(fid,uid,patch)=>inQ(async()=>{const m=(await msgsOf(fid)).find(x=>x.uid==uid);if(m){Object.assign(m,patch);await putMsg(m)}});
 async function mbOutbox(){
@@ -883,7 +898,30 @@ async function markRead(fid,ms){
   let wm=0;for(const m of ms)if(!m.me&&m.read===false){m.read=true;wm=Math.max(wm,m.ts);await putMsg(m)}
   if(wm)toSibs({k:'read',f:fid,ts:wm});
 }
-async function render(){const _i={},_u={};await Promise.all(Object.values(friends).map(async f=>{const ms=await msgsOf(f.id);if(f.id==cur&&!document.hidden&&autoRead)await markRead(f.id,ms);_i[f.id]=isGrp(f)?{n:0}:streak(f,ms);const n=ms.filter(m=>!m.me&&m.read===false).length;if(n)_u[f.id]=n}));info=_i;unread.n=_u;if(cur&&autoRead){try{localStorage.setItem('sk_last',cur)}catch(e){}}$('bFr').style.display=friends[cur]?'':'none';applyBg();refreshUnread();
+/* only the open chat is read in full; everyone else is summarised once and the summary is reused until something in that chat changes */
+const sumCache=new Map(),sumV=new Map(),chatLim={};let scrollKeep=null,rRun=null,rNext=null,warmT=null;
+const sumBump=fid=>sumV.set(fid,(sumV.get(fid)||0)+1);
+function mkSum(ms){return{n:ms.reduce((a,m)=>a+(!m.me&&m.read===false?1:0),0),imgs:ms.filter(m=>m.t=='img'||m.t=='video').map(m=>({t:m.t,me:m.me,pend:m.pend,ts:m.ts}))}}
+async function sumOf(fid){
+  const c=sumCache.get(fid);if(c)return c;
+  const v=sumV.get(fid)||0,s=mkSum(await msgsOf(fid));
+  if((sumV.get(fid)||0)==v)sumCache.set(fid,s);
+  return s;
+}
+/* many things ask for a redraw at once (connections opening, messages arriving); run one at a time and fold the rest into a single follow-up */
+function render(lazy){
+  if(!rRun){rRun=renderNow(lazy===true).then(()=>{rRun=null},e=>{rRun=null;throw e});return rRun}
+  if(!rNext){const go=()=>{rNext=null;return render()};rNext=rRun.then(go,go)}
+  return rNext;
+}
+async function renderNow(lazy){const _i={},_u={};let skipped=false;await Promise.all(Object.values(friends).map(async f=>{
+  let sm;
+  if(f.id==cur){const ms=lazy?await msgsRecent(f.id,(chatLim[f.id]||150)+30):await msgsOf(f.id);if(!document.hidden&&autoRead)await markRead(f.id,ms);sm=mkSum(ms);if(lazy)skipped=true}
+  else if(lazy&&!sumCache.has(f.id)){skipped=true;if(info[f.id])_i[f.id]=info[f.id];if(unread.n[f.id])_u[f.id]=unread.n[f.id];return}
+  else sm=await sumOf(f.id);
+  _i[f.id]=isGrp(f)?{n:0}:streak(f,sm.imgs);if(sm.n)_u[f.id]=sm.n}));
+  if(skipped){clearTimeout(warmT);warmT=setTimeout(()=>render(),40)}
+  info=_i;unread.n=_u;if(cur&&autoRead){try{localStorage.setItem('sk_last',cur)}catch(e){}}$('bFr').style.display=friends[cur]?'':'none';applyBg();refreshUnread();
   $('strip').innerHTML='';
   shownFriends().forEach(f=>{
     const b=document.createElement('button');b.className='fr'+(f.id==cur?' on':'');
@@ -892,11 +930,12 @@ async function render(){const _i={},_u={};await Promise.all(Object.values(friend
   const box=$('msgs'),f=friends[cur];
   if(!f){$('stat').textContent='Your ID: '+shareCode();box.innerHTML='<div class="empty">No friends yet.<br>Tap “My ID” to share yours, or “+ Friend” to add theirs.<br>Everything stays on your device.</div>';return}
   $('stat').textContent=statText(f);
-  const all=(await msgsOf(cur)).sort((a,b)=>a.ts-b.ts);
+  const all=(lazy?await msgsRecent(cur,(chatLim[cur]||150)+30):await msgsOf(cur)).sort((a,b)=>a.ts-b.ts);
   if(!document.hidden&&autoRead){const t=Date.now();for(const m of all)if(!m.seen&&!m.gone){m.seen=t;await putMsg(m)}}
-  const ms=all.filter(m=>!m.gone);
+  const ms=all.filter(m=>!m.gone),LIM=chatLim[cur]||150,hid=Math.max(0,ms.length-LIM),vis=hid?ms.slice(hid):ms;
   box.innerHTML='';if(!ms.length)box.innerHTML='<div class="empty">'+(all.length?'Earlier messages have disappeared. Say hi to ':'Say hi to ')+esc(dn(f))+'.</div>';
-  ms.forEach(m=>{
+  if(hid){const mb=document.createElement('button');mb.className='btn g';mb.style.alignSelf='center';mb.textContent='Show '+Math.min(150,hid)+' earlier messages';mb.onclick=()=>{scrollKeep=box.scrollHeight-box.scrollTop;chatLim[cur]=LIM+150;render()};box.appendChild(mb)}
+  vis.forEach(m=>{
     const d=document.createElement('div');d.className='m'+(m.me?' me':'');d.dataset.uid=m.uid;
     if(m.unsent){d.textContent='🚫 '+(m.me?'You':whoName(m))+' unsent a message';d.classList.add('unsent');box.appendChild(d);return}
     if(m.t=='text'){d.textContent=m.text;d.classList.add('tap');d.onclick=()=>toggleSaved(m)}
@@ -920,7 +959,7 @@ async function render(){const _i={},_u={};await Promise.all(Object.values(friend
     if(m.saved){const k=document.createElement('div');k.className='kp';k.textContent='📌 Saved on this device';d.appendChild(k)}
     if(m.me&&m.pend){const s=document.createElement('div');s.style.cssText='font-size:11px;color:var(--mute)';s.textContent=isGrp(f)&&(m.acks||[]).length?'⏳ delivered to '+m.acks.length+' of '+gTargets(f).length:'⏳ waiting to send';d.appendChild(s)}
     box.appendChild(d)});
-  box.scrollTop=box.scrollHeight;
+  if(scrollKeep!=null){box.scrollTop=box.scrollHeight-scrollKeep;scrollKeep=null}else box.scrollTop=box.scrollHeight;
 }
 const saveVideo=m=>saveMedia(m);
 async function saveMedia(m){
@@ -1146,7 +1185,7 @@ function quoteEl(m){
   const q=document.createElement('div');q.className='qt';
   const w=document.createElement('b');w.textContent=m.re.mine?'You':(friends[m.re.by||m.f]?dn(friends[m.re.by||m.f]):'Someone');
   q.append(w,document.createTextNode(m.re.s));
-  q.onclick=e=>{e.stopPropagation();const t=document.querySelector('[data-uid="'+m.re.u+'"]');if(t){t.scrollIntoView({block:'center'});t.classList.add('flash');setTimeout(()=>t.classList.remove('flash'),1200)}};
+  q.onclick=async e=>{e.stopPropagation();if(!document.querySelector('[data-uid="'+m.re.u+'"]')){await revealMsg(m.f,m.re.u);await render()}const t=document.querySelector('[data-uid="'+m.re.u+'"]');if(t){t.scrollIntoView({block:'center'});t.classList.add('flash');setTimeout(()=>t.classList.remove('flash'),1200)}};
   return q;
 }
 /* ---------- reactions: one emoji per person per message, newest wins ---------- */
@@ -1207,7 +1246,7 @@ function hl(el,text,q){
 async function jumpTo(fid,uid){
   $('sea').classList.remove('show');
   if(cur!=fid)setReply(null);
-  cur=fid;autoRead=true;await render();
+  cur=fid;autoRead=true;if(uid)await revealMsg(fid,uid);await render();
   if(uid){const t=document.querySelector('[data-uid="'+uid+'"]');if(t){t.scrollIntoView({block:'center'});t.classList.add('flash');setTimeout(()=>t.classList.remove('flash'),1500)}}
 }
 async function runSearch(){
@@ -1416,6 +1455,30 @@ function showMenuItems(items,x,y){
   mn.style.left=Math.max(8,Math.min(x,innerWidth-w-8))+'px';mn.style.top=Math.max(8,Math.min(y,innerHeight-h-8))+'px';
 }
 $('bAdd').onclick=()=>{const r=$('bAdd').getBoundingClientRect();showMenuItems([{label:'🙋 Add a friend',run:addFriendFlow},{label:'👥 New group',run:openGrp}],r.left,r.bottom+4)};
+function waitPeer(){
+  if(typeof Peer!='undefined')return Promise.resolve(true);
+  return new Promise(res=>{const t0=Date.now(),iv=setInterval(()=>{if(typeof Peer!='undefined'){clearInterval(iv);res(true)}else if(Date.now()-t0>20000){clearInterval(iv);res(false)}},50)});
+}
+/* ---------- coming back to the app: drop frozen requests, check that connections are really alive, fetch the mailbox in parallel ---------- */
+function pingAll(){
+  const t0=Date.now();
+  Object.values(conns).forEach(c=>{if(c&&c.open){c.pingAt=t0;try{c.send({k:'pp'})}catch(e){try{c.close()}catch(x){}}}});
+  setTimeout(()=>{
+    Object.values(conns).forEach(c=>{if(c&&c.open&&c.pingAt==t0&&!(c.alive>=t0)){try{c.close()}catch(e){}if(conns[c.peer]===c)delete conns[c.peer]}});
+    connectAll();render();
+  },3000);
+}
+function resumeApp(){
+  if(updReady&&!$('txt').value&&!document.querySelector('.modal.show')){updReady=false;location.reload();return}
+  mbAbortOld(5000);
+  mbPull(true);mbOutbox();pingAll();
+  setTimeout(sweepExpired,3000);
+}
+/* make sure an older message is on screen before scrolling to it */
+async function revealMsg(fid,uid){
+  const all=(await msgsOf(fid)).filter(m=>!m.gone).sort((a,b)=>a.ts-b.ts),i=all.findIndex(m=>m.uid==uid);
+  if(i>=0)chatLim[fid]=Math.max(chatLim[fid]||150,all.length-i+20);
+}
 /* ---------- notifications: web push is signed and encrypted on the sender's device and only forwarded by the mailbox script ---------- */
 const VAPID_PUB='BE1-EHR3YRoR2rC-WI2RmmdqPczRRKBhTwE_qxSjMpfWvEIJ1h_njGrKo6Ejc85ht2vE54D2sU24A_yzpJDqq7w',VAPID_SUB='https://kingboppa.github.io/Skein-Web-1/';
 const VAPID_JWK={"kty":"EC","crv":"P-256","x":"TX4QdHdhGhHasL5YjZGaZ2o9zNFEoGFPAT-rFKMyl9Y","y":"vEIJ1h_njGrKo6Ejc85ht2vE54D2sU24A_yzpJDqq7w","d":"KmFt49wFKHXJ_Z_XECFAQ_aIpLaSWXYC_hDmKj2rSGA"};   /* one shared app key: it only lets a device send notifications, never read anything */
@@ -1553,26 +1616,24 @@ $('pnTest').onclick=async()=>{
   const r=await pushSend(s,{t:'Skein',b:'Test notification. It works!',g:'test'}).catch(e=>String(e&&e.message||e));
   toast(r===201||r===200?'Sent. It should appear in a moment.':r==='old script'?'Your mailbox script needs the one-time update first.':r===404||r===410?'That device’s subscription expired. Turn notifications off and on again.':'Didn’t work ('+r+').');
 };
-try{if(navigator.serviceWorker)navigator.serviceWorker.addEventListener('message',e=>{const g=e.data&&e.data.open;if(g&&friends[g]){cur=g;autoRead=true;render()}})}catch(e){}
+let updReady=false;
+try{if(navigator.serviceWorker)navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.upd){updReady=true;return}const g=e.data&&e.data.open;if(g&&friends[g]){cur=g;autoRead=true;render()}})}catch(e){}
 /* ---------- boot ---------- */
 (async()=>{
   const fs=await tx('friends','readonly',s=>s.getAll());fs.forEach(f=>friends[f.id]=f);{const last=localStorage.getItem('sk_last');cur=fs.some(f=>f.id==last)?last:fs[0]&&fs[0].id}
-  await render();
-  try{if(SD)SD.ready()}catch(e){}
+  render(true).then(()=>{try{if(SD)SD.ready()}catch(e){}});
   if(!localStorage.getItem('sk_name')){const n=await askText('Welcome! Pick a display name for your friends to see');myName=(n||'Me').slice(0,20);localStorage.setItem('sk_name',myName)}
   if(!localStorage.getItem('sk_dis'))setTimeout(openDis,500);else if(!localStorage.getItem('sk_permask'))setTimeout(openPerm,700);
-  sweepExpired();
-  if(typeof Peer=='undefined'){toast('Couldn’t load the connection library. Check your internet.');return}
+  setTimeout(sweepExpired,2500);
   await initKeys();
-  startPeer();
   mbPull();pushRefresh();
+  waitPeer().then(ok=>{if(ok){startPeer();if(peer)peer.on('open',()=>connectAll())}else toast('Couldn’t load the connection library. Check your internet.')});
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
   if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!navigator.standalone&&!matchMedia('(display-mode: standalone)').matches)$('ios').style.display='flex';
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)sweepExpired();if(document.hidden||!peer)return;if(peer.destroyed)startPeer();else if(peer.disconnected)peer.reconnect();connectAll();mbPull();mbOutbox()});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden||!peer)return;if(peer.destroyed)startPeer();else if(peer.disconnected)peer.reconnect();connectAll();resumeApp()});
   if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
   const h=location.hash.match(/add=([\w-]+)/);if(h&&!friends[h[1]]&&h[1]!=myId){const n=await askText('Add this friend. What should we call them?');if(n)addFriend(h[1],n)}
   setInterval(()=>connectAll(),10000);setInterval(render,60000);let mbTick=0;setInterval(()=>{mbOutbox();if(++mbTick%3==0)mbPull()},20000);
-  peer.on('open',()=>connectAll());
 })();
 </script>
 </body></html>

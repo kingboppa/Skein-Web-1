@@ -1,16 +1,33 @@
-const C = 'skein-v1';
+const C = 'skein-v2';
 const ASSETS = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(C).then(c => c.addAll(ASSETS))); self.skipWaiting(); });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== C).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
+/* Open instantly from the saved copy, then refresh it in the background; the page applies a newer copy the next time you come back. */
 self.addEventListener('fetch', e => {
   const u = new URL(e.request.url);
   if (e.request.method !== 'GET') return;
-  if (u.origin === location.origin || u.hostname === 'cdn.jsdelivr.net') {
-    e.respondWith(fetch(e.request).then(r => { const cp = r.clone(); caches.open(C).then(c => c.put(e.request, cp)); return r; })
-      .catch(() => caches.match(e.request)));
-  }
+  const cdn = u.hostname === 'cdn.jsdelivr.net';
+  if (u.origin !== location.origin && !cdn) return;
+  e.respondWith(caches.open(C).then(async c => {
+    const hit = await c.match(e.request);
+    if (hit && cdn) return hit; // versioned library file: never changes
+    const net = fetch(e.request, cdn ? undefined : { cache: 'no-cache' }).then(async r => {
+      if (r && r.ok) {
+        const old = hit && (hit.headers.get('etag') || hit.headers.get('last-modified'));
+        const now = r.headers.get('etag') || r.headers.get('last-modified');
+        await c.put(e.request, r.clone());
+        if (hit && old && now && old !== now) {
+          const cs = await self.clients.matchAll({ includeUncontrolled: true });
+          cs.forEach(x => x.postMessage({ upd: 1 }));
+        }
+      }
+      return r;
+    });
+    if (hit) { e.waitUntil(net.catch(() => {})); return hit; }
+    return net.catch(() => new Response('', { status: 504 }));
+  }));
 });
 
 /* notifications */
