@@ -176,3 +176,10 @@ function relay_(r) {
     return { ok: true, status: res.getResponseCode(), text: String(res.getContentText() || '').slice(0, 200) };
   } catch (e) { return { ok: false, err: String(e && e.message || e).slice(0, 120) }; }
 }
+
+/* Run this once from the editor (select "authorize", press Run) so Google asks you to allow sending notifications. */
+function authorize() {
+  UrlFetchApp.fetch('https://web.push.apple.com/', { muteHttpExceptions: true, followRedirects: false });
+  DriveApp.getRootFolder();
+  return 'ok';
+}

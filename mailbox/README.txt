@@ -45,3 +45,5 @@ Notifications need the script to be able to pass a notification along.
 4. Under Version choose "New version", then click Deploy.
    (If Google asks for permission to connect to an external service, allow it.)
 Your web address stays the same, so you and your friends change nothing else.
+
+If Google says "you do not have permission to call UrlFetchApp.fetch": in the editor pick the function "authorize" in the toolbar, press Run, and accept the permission prompts (Advanced > Go to project > Allow). Then do Deploy > Manage deployments > pencil > New version > Deploy.
