@@ -144,6 +144,7 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
   <button class="btn" id="pmGo">Allow camera &amp; microphone</button>
   <div id="pmHelp" style="font-size:12px;color:var(--mute)"></div>
   <hr style="width:100%;border:0;border-top:1px solid var(--line)">
+  <div id="instBox" style="display:none;flex-direction:column;gap:8px;width:100%"><div style="font-size:14px;font-weight:600">Add to Home Screen</div><button class="btn" id="instGo">📲 Add Skein to my Home Screen</button><div style="font-size:12px;color:var(--mute)" id="instHelp"></div><hr style="width:100%;border:0;border-top:1px solid var(--line)"></div>
   <div style="font-size:14px;font-weight:600">Share Skein</div>
   <div class="row" style="max-width:none"><button class="btn" id="shApp" style="flex:1">Share app link</button><button class="btn g" id="shInv" style="flex:1">Invite with my ID</button></div>
   <div style="font-size:12px;color:var(--mute)">“Invite” sends the link plus yours, so they can add you in one tap. On iPhone they should open it in Safari, tap Share, “Add to Home Screen”, then add you from inside the app with your ID.</div>
@@ -178,6 +179,7 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
   <button class="btn g" id="foX">Close</button>
 </div></div>
 <div id="mnu"></div>
+<div class="modal" id="instM" style="z-index:98" onclick="if(event.target==this)this.style.display='none'"><div style="background:var(--surface);color:var(--ink);padding:18px;border-radius:16px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:10px"><div style="font-size:17px;font-weight:700">Add Skein to your Home Screen</div><div id="instSteps" style="font-size:15px;line-height:1.5"></div><button class="btn" onclick="$('instM').style.display='none'">Got it</button></div></div>
 <div class="modal" id="cf" style="z-index:99"><div style="background:var(--surface);color:var(--ink);padding:18px;border-radius:16px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:12px">
   <div id="cfT" style="font-size:15px;white-space:pre-wrap"></div>
   <div class="row" style="max-width:none"><button class="btn g" id="cfNo">No</button><button class="btn" id="cfOk" style="flex:1">Yes</button></div>
@@ -212,10 +214,11 @@ button.send{background:var(--accent);border:0;border-radius:99px;padding:0 16px;
   <input type="text" id="askI" autocomplete="off" style="padding:11px 14px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:16px;width:100%">
   <div class="row" style="max-width:none"><button class="btn g" id="askX">Cancel</button><button class="btn" id="askOk" style="flex:1">OK</button></div>
 </div></div>
-<div id="ios" style="display:none;position:fixed;left:8px;right:8px;top:calc(8px + env(safe-area-inset-top,0px));z-index:30;background:#222;color:#fff;padding:10px 12px;border-radius:12px;font-size:14px;gap:10px;align-items:center"><span style="flex:1">To install Skein: tap the Share button, then “Add to Home Screen”, and open it from there so your chats and ID are kept.</span><button class="btn g" onclick="this.parentNode.style.display='none'">✕</button></div>
+<div id="ios" style="display:none;position:fixed;left:8px;right:8px;top:calc(8px + env(safe-area-inset-top,0px));z-index:30;background:#222;color:#fff;padding:10px 12px;border-radius:12px;font-size:14px;gap:10px;align-items:center"><span style="flex:1">To install Skein: tap the Share button, then “Add to Home Screen”, and open it from there so your chats and ID are kept.</span><button class="btn" onclick="installGo()">Show me</button><button class="btn g" onclick="this.parentNode.style.display='none'">✕</button></div>
 <div id="toast"></div>
 
 <script>
+var instEv=null;
 const $=id=>document.getElementById(id);
 const toast=t=>{const e=$('toast');e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',3000)};
 /* our own yes/no box: the system pop-up leaves the typing box unclickable on Windows */
@@ -280,7 +283,7 @@ const enc=s=>new TextEncoder().encode(s);
 async function signFor(dev){if(!myPriv)return null;return new Uint8Array(await SUB.sign(SIG,myPriv,enc(myId+'>'+dev)))}
 async function verifyFrom(jwk,sig,dev){try{const k=await SUB.importKey('jwk',{kty:jwk.kty,crv:jwk.crv,x:jwk.x,y:jwk.y},ALG,false,['verify']);return await SUB.verify(SIG,k,new Uint8Array(sig),enc(dev+'>'+myId))}catch(e){return false}}
 /* ---------- theme: auto / light / dark ---------- */
-const APP_VERSION='1.16.3';
+const APP_VERSION='1.17.0';
 function getTheme(){try{const t=localStorage.getItem('sk_theme');return t=='light'||t=='dark'?t:'auto'}catch(e){return'auto'}}
 function applyTheme(t){
   if(t=='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);
@@ -796,6 +799,7 @@ async function shareLink(url,text){
   try{if(navigator.share){await navigator.share({title:'Skein',text,url});return}}catch(e){if(e&&e.name=='AbortError')return}
   if(await copyText(url))toast('Link copied. Paste it into a message.');else await askText('Copy this link',url);
 }
+$('instGo').onclick=installGo;instUi();
 $('shApp').onclick=()=>shareLink(SITE,'Skein is a chat app with no ads.');
 $('shInv').onclick=()=>shareLink(SITE+'#add='+myAcct,'Join me on Skein, a chat app with no ads. Open this to add me:');
 $('mbSet').onclick=async()=>{
@@ -976,6 +980,25 @@ async function renderNow(lazy){const _i={},_u={};let skipped=false;await Promise
     if(m.me&&m.pend){const s=document.createElement('div');s.style.cssText='font-size:11px;color:var(--mute)';s.textContent=isGrp(f)&&(m.acks||[]).length?'⏳ delivered to '+m.acks.length+' of '+gTargets(f).length:(!isGrp(f)&&m.mbAt&&m.mbMiss&&!m.mbMiss.length?'📬 in the mailbox, arrives when '+dn(f)+' opens Skein':!mbUrl?'⏳ waiting for '+dn(f)+' to come online (no mailbox set up)':'⏳ waiting to send');d.appendChild(s)}
     box.appendChild(d)});
   if(scrollKeep!=null){box.scrollTop=box.scrollHeight-scrollKeep;scrollKeep=null}else box.scrollTop=box.scrollHeight;
+}
+
+/* ---------- add to home screen ---------- */
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();instEv=e;instUi()});
+window.addEventListener('appinstalled',()=>{instEv=null;toast('Skein was added to your Home Screen');instUi()});
+function instUi(){
+  const b=$('instBox');if(!b)return;
+  const ios=/iPhone|iPad|iPod/i.test(navigator.userAgent||'');if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){b.style.display='none';return}
+  b.style.display='flex';
+  $('instHelp').textContent=instEv?'One tap and Skein is installed like a normal app.':ios?'Apple doesn’t let any website do this by itself, so the button shows you the two taps.':'Opens the steps for your browser.';
+}
+async function installGo(){
+  if(instEv){const e=instEv;instEv=null;try{e.prompt();const r=await e.userChoice;if(r&&r.outcome=='accepted')toast('Adding Skein…')}catch(x){}instUi();return}
+  const st=$('instSteps'),ios=/iPhone|iPad|iPod/i.test(navigator.userAgent||''),ua=navigator.userAgent;
+  const inApp=/FBAN|FBAV|Instagram|Snapchat|Line\/|MicroMessenger|GSA\//.test(ua);
+  let h;
+  if(ios)h=(inApp?'<div style="color:var(--bad,#c00);margin-bottom:6px">You’re inside another app’s browser. Tap ••• or the compass and choose <b>Open in Safari</b> first.</div>':'')+'<ol style="margin:0;padding-left:20px"><li>Tap the <b>Share</b> button <span style="font-size:20px">⬆︎</span> (square with an arrow, at the bottom of Safari or next to the address bar).</li><li>Scroll down and tap <b>Add to Home Screen</b>.</li><li>Tap <b>Add</b>, then open Skein from the new icon.</li></ol>';
+  else h='<ol style="margin:0;padding-left:20px"><li>Open the browser menu <b>⋮</b>.</li><li>Tap <b>Install app</b> or <b>Add to Home screen</b>.</li><li>Confirm, then open Skein from the new icon.</li></ol>';
+  st.innerHTML=h;$('instM').style.display='flex';
 }
 const saveVideo=m=>saveMedia(m);
 async function saveMedia(m){
